@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>觅食官 · 美食探店助手</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
@@ -691,6 +691,27 @@
 
   @media (max-width: 480px) {
     .cards-grid { grid-template-columns: 1fr; }
+
+    /* Mobile card fold: hide cards beyond #3 until user expands */
+    .mobile-fold { display: none; }
+
+    /* Sidebar: use small viewport height to avoid iOS URL-bar overlap */
+    .sidebar { height: 100svh; }
+
+    /* Input bar: add iPhone home indicator clearance */
+    .input-bar {
+      padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Header: reclaim horizontal space on small screens */
+    header { padding: 11px 14px; }
+    .logo-sub, .logo-sep { display: none; }
+
+    /* Cards: tighter padding on mobile */
+    .r-card { padding: 16px; }
+
+    /* Chat wrap: less top breathing room on small screens */
+    .chat-wrap { padding-top: 20px; }
   }
 
   /* ── FOLLOW-UP CHIPS ── */
@@ -1224,6 +1245,44 @@
   }
   .share-confirm-btn:hover:not(:disabled) { opacity: 0.85; }
   .share-confirm-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* ── SAFARI AUTO-ZOOM FIX: inputs must be ≥ 16px on mobile ── */
+  @media (max-width: 900px) {
+    textarea { font-size: 16px; }
+    .fav-new-input { font-size: 16px; }
+  }
+
+  /* ── TOUCH DEVICES: fav button always visible ── */
+  @media (hover: none) {
+    .fav-btn { opacity: 0.6; }
+  }
+
+  /* ── MOBILE CARD EXPAND BUTTON ── */
+  .cards-more-btn {
+    display: none;
+    width: 100%;
+    margin-top: 10px;
+    padding: 13px 16px;
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--card-radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    letter-spacing: 0.01em;
+  }
+  .cards-more-btn:hover,
+  .cards-more-btn:active {
+    background: var(--color-bg);
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+  @media (max-width: 480px) {
+    .cards-more-btn { display: block; }
+  }
 </style>
 </head>
 <body>
@@ -1552,7 +1611,7 @@ function appendBotBubbles(text) {
     grid.className = 'cards-grid';
     restaurants.forEach((r, i) => {
       const card = document.createElement('div');
-      card.className = 'r-card';
+      card.className = 'r-card' + (i >= 3 ? ' mobile-fold' : '');
       card.style.animationDelay = (i * 0.07) + 's';
       const saved = isFavorited(r.name, r.address);
       card.innerHTML = `
@@ -1575,6 +1634,16 @@ function appendBotBubbles(text) {
       grid.appendChild(card);
     });
     group.appendChild(grid);
+    if (restaurants.length > 3) {
+      const moreBtn = document.createElement('button');
+      moreBtn.className = 'cards-more-btn';
+      moreBtn.textContent = `还有 ${restaurants.length - 3} 家推荐，点击查看 ↓`;
+      moreBtn.addEventListener('click', () => {
+        grid.querySelectorAll('.mobile-fold').forEach(c => c.classList.remove('mobile-fold'));
+        moreBtn.remove();
+      });
+      group.appendChild(moreBtn);
+    }
     wrap.appendChild(group);
   } else {
     const p = document.createElement('div');
