@@ -721,6 +721,328 @@
     color: white;
     border-color: var(--color-accent);
   }
+
+  /* ── CARD FAV BUTTON ── */
+  .r-card { position: relative; }
+
+  .fav-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 26px;
+    height: 26px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s, border-color 0.15s, color 0.15s;
+    line-height: 1;
+    padding: 0;
+  }
+  .r-card:hover .fav-btn { opacity: 1; }
+  .fav-btn.saved { opacity: 1; color: var(--color-accent); border-color: #F0C4A8; background: #FFF3EE; }
+  .fav-btn:hover { background: var(--color-accent) !important; color: white !important; border-color: var(--color-accent) !important; opacity: 1; }
+
+  /* ── FAV POPOVER OVERLAY ── */
+  .fav-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26,18,9,0.38);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .fav-overlay.open { display: flex; }
+
+  .fav-panel {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    padding: 22px 20px 18px;
+    width: 300px;
+    max-width: calc(100vw - 40px);
+    box-shadow: 0 8px 36px rgba(0,0,0,0.14);
+    animation: fadeUp 0.2s ease;
+  }
+
+  .fav-panel-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    margin-bottom: 4px;
+  }
+
+  .fav-panel-sub {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-bottom: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .fav-collections-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 190px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+  }
+  .fav-collections-list::-webkit-scrollbar { width: 3px; }
+  .fav-collections-list::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
+
+  .fav-coll-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.12s;
+    user-select: none;
+  }
+  .fav-coll-item:hover { background: var(--color-bg); }
+
+  .fav-coll-check {
+    width: 17px;
+    height: 17px;
+    border: 1.5px solid var(--color-border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 10px;
+    color: white;
+    background: white;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .fav-coll-item.checked .fav-coll-check {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  .fav-coll-label { font-size: 14px; color: var(--color-text-main); flex: 1; }
+  .fav-coll-count-badge { font-size: 11px; color: var(--color-text-secondary); opacity: 0.55; }
+
+  .fav-new-row {
+    display: flex;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border);
+  }
+  .fav-new-input {
+    flex: 1;
+    border: 1px solid var(--color-border);
+    border-radius: var(--input-radius);
+    padding: 8px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    background: var(--color-bg);
+    color: var(--color-text-main);
+    outline: none;
+    transition: border-color 0.15s;
+    min-width: 0;
+  }
+  .fav-new-input:focus { border-color: var(--color-accent); }
+  .fav-new-input::placeholder { color: var(--color-text-secondary); opacity: 0.5; }
+
+  .fav-new-btn {
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: var(--btn-radius);
+    padding: 8px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .fav-new-btn:hover { opacity: 0.85; }
+
+  .fav-empty-hint {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    text-align: center;
+    padding: 12px 0 8px;
+    opacity: 0.6;
+  }
+
+  /* ── SIDEBAR FAVORITES ENTRY ── */
+  .sidebar-fav-divider {
+    height: 1px;
+    background: var(--color-border);
+    margin: 4px 10px;
+    opacity: 0.7;
+    flex-shrink: 0;
+  }
+  .sidebar-fav-entry {
+    margin: 4px 6px 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    border: 1px solid transparent;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+    user-select: none;
+  }
+  .sidebar-fav-entry:hover { background: rgba(0,0,0,0.05); }
+  .sidebar-fav-entry.active {
+    background: var(--color-card);
+    border-color: var(--color-border);
+    color: var(--color-accent);
+    font-weight: 500;
+  }
+
+  /* ── FAVORITES VIEW ── */
+  .fav-view {
+    display: none;
+    flex: 1;
+    overflow-y: auto;
+    padding: 36px var(--page-margin) 28px;
+    max-width: 980px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  .fav-view.active { display: block; }
+  .fav-view::-webkit-scrollbar { width: 4px; }
+  .fav-view::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
+
+  .fav-view-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--color-text-main);
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+  }
+  .fav-view-sub { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 28px; opacity: 0.7; }
+
+  .fav-coll-section {
+    margin-bottom: 20px;
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--card-radius);
+    overflow: hidden;
+    animation: fadeUp 0.25s ease;
+  }
+
+  .fav-coll-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .fav-coll-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    flex: 1;
+  }
+  .fav-coll-badge {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 100px;
+    padding: 2px 9px;
+  }
+  .fav-coll-del-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    font-size: 18px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.15s, opacity 0.15s;
+    opacity: 0.35;
+  }
+  .fav-coll-del-btn:hover { color: var(--color-accent); opacity: 1; }
+
+  .fav-rest-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 13px 18px;
+    gap: 10px;
+    border-bottom: 1px solid var(--color-border);
+    transition: background 0.12s;
+  }
+  .fav-rest-row:last-child { border-bottom: none; }
+  .fav-rest-row:hover { background: var(--color-bg); }
+
+  .fav-rest-info { flex: 1; min-width: 0; }
+  .fav-rest-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    margin-bottom: 4px;
+  }
+  .fav-rest-meta { font-size: 12px; color: var(--color-text-secondary); line-height: 1.7; }
+  .fav-rest-link {
+    display: inline-block;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-color: var(--color-border);
+    cursor: pointer;
+    transition: color 0.15s;
+    margin-top: 3px;
+  }
+  .fav-rest-link:hover { color: var(--color-accent); text-decoration-color: var(--color-accent); }
+  .fav-rest-del {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    font-size: 16px;
+    padding: 1px 4px;
+    border-radius: 4px;
+    opacity: 0.35;
+    transition: opacity 0.15s, color 0.15s;
+    flex-shrink: 0;
+    margin-top: 2px;
+    line-height: 1;
+  }
+  .fav-rest-del:hover { opacity: 1; color: var(--color-accent); }
+
+  .fav-empty-state {
+    text-align: center;
+    padding: 60px 20px 40px;
+    animation: fadeUp 0.3s ease;
+  }
+  .fav-empty-icon { font-size: 38px; margin-bottom: 16px; opacity: 0.3; }
+  .fav-empty-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--color-text-main);
+    margin-bottom: 8px;
+  }
+  .fav-empty-sub { font-size: 13px; color: var(--color-text-secondary); opacity: 0.65; line-height: 1.7; }
 </style>
 </head>
 <body>
@@ -735,6 +1057,11 @@
       <button class="new-chat-btn" id="newChatBtn" title="新建对话">＋</button>
     </div>
     <div class="sidebar-list" id="sidebarList"></div>
+    <div class="sidebar-fav-divider"></div>
+    <div class="sidebar-fav-entry" id="favEntry">
+      <span style="font-size:14px;">♡</span>
+      <span>我的收藏</span>
+    </div>
   </aside>
 
   <div class="main-area">
@@ -750,8 +1077,9 @@
     </header>
 
     <div class="chat-wrap" id="chatWrap"></div>
+    <div class="fav-view" id="favView"></div>
 
-    <div class="input-bar">
+    <div class="input-bar" id="inputBar">
       <div class="input-inner">
         <textarea id="inp" placeholder="例如：帮我找广州珠江新城适合约会的粤菜…" rows="1"></textarea>
         <button class="send-btn" id="btn">
@@ -764,6 +1092,18 @@
   </div>
 </div>
 
+<div class="fav-overlay" id="favOverlay">
+  <div class="fav-panel" id="favPanel">
+    <div class="fav-panel-title">保存到合集</div>
+    <div class="fav-panel-sub" id="favPanelSub"></div>
+    <div class="fav-collections-list" id="favCollsList"></div>
+    <div class="fav-new-row">
+      <input class="fav-new-input" id="favNewInput" placeholder="新建合集名称" autocomplete="off" />
+      <button class="fav-new-btn" id="favNewBtn">添加</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const WEBHOOK_URL = 'https://rayrayonthemove.app.n8n.cloud/webhook/86b2b344-ceaa-4601-92b8-2dc810150356/chat';
 const STORAGE_KEY = 'misshiguan_sessions_v2';
@@ -771,6 +1111,50 @@ const STORAGE_KEY = 'misshiguan_sessions_v2';
 let sessions = [];
 let currentSessionId = null;
 let busy = false;
+let currentView = 'chat'; // 'chat' | 'favorites'
+
+const FAVS_KEY = 'misshiguan_favorites_v2';
+let _favPopoverRestaurant = null;
+
+/* ── FAVORITES HELPERS ── */
+function loadFavs() {
+  try { const r = localStorage.getItem(FAVS_KEY); return r ? JSON.parse(r) : {}; } catch { return {}; }
+}
+function saveFavs(f) {
+  try { localStorage.setItem(FAVS_KEY, JSON.stringify(f)); } catch {}
+}
+function favKey(name, address) {
+  return (name || '').trim() + '||' + (address || '').trim();
+}
+function isFavorited(name, address) {
+  const k = favKey(name, address);
+  return Object.values(loadFavs()).some(list => list.some(r => favKey(r.name, r.address) === k));
+}
+function getRestaurantCollections(name, address) {
+  const k = favKey(name, address), f = loadFavs();
+  return Object.keys(f).filter(c => f[c].some(r => favKey(r.name, r.address) === k));
+}
+function setRestaurantInCollection(restaurant, collName, shouldAdd) {
+  const f = loadFavs(), k = favKey(restaurant.name, restaurant.address);
+  if (!f[collName]) f[collName] = [];
+  const idx = f[collName].findIndex(r => favKey(r.name, r.address) === k);
+  if (shouldAdd) {
+    if (idx === -1) f[collName].push({ name: restaurant.name, rating: restaurant.rating, address: restaurant.address, mapUrl: restaurant.mapUrl, savedAt: Date.now() });
+  } else {
+    if (idx !== -1) f[collName].splice(idx, 1);
+    if (f[collName].length === 0) delete f[collName];
+  }
+  saveFavs(f);
+}
+function addToNewCollection(collName, restaurant) {
+  collName = collName.trim(); if (!collName) return false;
+  const f = loadFavs(), k = favKey(restaurant.name, restaurant.address);
+  if (!f[collName]) f[collName] = [];
+  if (!f[collName].some(r => favKey(r.name, r.address) === k)) {
+    f[collName].push({ name: restaurant.name, rating: restaurant.rating, address: restaurant.address, mapUrl: restaurant.mapUrl, savedAt: Date.now() });
+  }
+  saveFavs(f); return true;
+}
 
 /* ── UTILS ── */
 function esc(s) {
@@ -821,16 +1205,19 @@ function createNewSession() {
   sessions.push(session);
   saveSessions();
   currentSessionId = session.id;
-  renderMessages();
-  renderSidebar();
+  showChatView();
   document.getElementById('inp').focus();
 }
 
 function switchSession(id) {
-  if (id === currentSessionId) return;
+  if (id === currentSessionId && currentView === 'chat') return;
   currentSessionId = id;
-  renderMessages();
-  renderSidebar();
+  if (currentView !== 'chat') {
+    showChatView();
+  } else {
+    renderMessages();
+    renderSidebar();
+  }
   if (window.innerWidth < 900) {
     document.getElementById('sidebar').classList.remove('mobile-open');
     document.getElementById('sidebarOverlay').classList.remove('visible');
@@ -878,6 +1265,8 @@ function renderSidebar() {
     item.addEventListener('click', () => switchSession(session.id));
     list.appendChild(item);
   });
+  const favEntry = document.getElementById('favEntry');
+  if (favEntry) favEntry.classList.toggle('active', currentView === 'favorites');
 }
 
 function toggleSidebar() {
@@ -960,6 +1349,7 @@ function appendBotBubbles(text) {
       const card = document.createElement('div');
       card.className = 'r-card';
       card.style.animationDelay = (i * 0.07) + 's';
+      const saved = isFavorited(r.name, r.address);
       card.innerHTML = `
         <div class="card-index">${String(i + 1).padStart(2, '0')}</div>
         <div class="card-name">${esc(r.name)}</div>
@@ -969,6 +1359,14 @@ function appendBotBubbles(text) {
         ${r.quote   ? `<hr class="card-divider"><div class="card-quote">${esc(r.quote)}</div>` : ''}
         ${r.mapUrl  ? `<a class="card-link" href="${r.mapUrl}" target="_blank">查看地图 →</a>` : ''}
       `;
+      const favBtn = document.createElement('button');
+      favBtn.className = 'fav-btn' + (saved ? ' saved' : '');
+      favBtn.title = saved ? '已收藏' : '收藏';
+      favBtn.textContent = saved ? '♥' : '♡';
+      favBtn.dataset.name = r.name || '';
+      favBtn.dataset.address = r.address || '';
+      favBtn.addEventListener('click', e => { e.stopPropagation(); openFavPopover(r); });
+      card.appendChild(favBtn);
       grid.appendChild(card);
     });
     wrap.appendChild(grid);
@@ -1068,6 +1466,153 @@ function starStr(r) {
   if (!r) return '';
   const n = parseFloat(r), f = Math.floor(n);
   return '★'.repeat(f) + (n%1>=0.5?'½':'') + '☆'.repeat(5-f-(n%1>=0.5?1:0));
+}
+
+/* ── FAV POPOVER ── */
+function openFavPopover(restaurant) {
+  _favPopoverRestaurant = restaurant;
+  document.getElementById('favPanelSub').textContent = restaurant.name || '';
+  renderFavPopover();
+  document.getElementById('favOverlay').classList.add('open');
+  document.getElementById('favNewInput').value = '';
+}
+
+function closeFavPopover() {
+  document.getElementById('favOverlay').classList.remove('open');
+  _favPopoverRestaurant = null;
+  refreshAllCardFavStates();
+}
+
+function renderFavPopover() {
+  const r = _favPopoverRestaurant; if (!r) return;
+  const f = loadFavs();
+  const checked = getRestaurantCollections(r.name, r.address);
+  const allColls = Object.keys(f);
+  const listEl = document.getElementById('favCollsList');
+  listEl.innerHTML = '';
+  if (allColls.length === 0) {
+    const hint = document.createElement('div');
+    hint.className = 'fav-empty-hint';
+    hint.textContent = '还没有合集，请先新建一个';
+    listEl.appendChild(hint);
+    return;
+  }
+  allColls.forEach(coll => {
+    const isChecked = checked.includes(coll);
+    const item = document.createElement('div');
+    item.className = 'fav-coll-item' + (isChecked ? ' checked' : '');
+    item.innerHTML = `
+      <div class="fav-coll-check">${isChecked ? '✓' : ''}</div>
+      <span class="fav-coll-label">${esc(coll)}</span>
+      <span class="fav-coll-count-badge">${f[coll].length}</span>
+    `;
+    item.addEventListener('click', () => {
+      const nowChecked = item.classList.contains('checked');
+      setRestaurantInCollection(r, coll, !nowChecked);
+      renderFavPopover();
+    });
+    listEl.appendChild(item);
+  });
+}
+
+function initFavPopover() {
+  document.getElementById('favOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('favOverlay')) closeFavPopover();
+  });
+  document.getElementById('favNewBtn').addEventListener('click', doAddNewCollection);
+  document.getElementById('favNewInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doAddNewCollection();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('favOverlay').classList.contains('open')) closeFavPopover();
+  });
+  document.getElementById('favEntry').addEventListener('click', () => {
+    if (currentView === 'favorites') showChatView(); else showFavView();
+  });
+}
+
+function doAddNewCollection() {
+  const inp = document.getElementById('favNewInput');
+  const name = inp.value.trim();
+  if (!name || !_favPopoverRestaurant) return;
+  addToNewCollection(name, _favPopoverRestaurant);
+  inp.value = '';
+  renderFavPopover();
+}
+
+function refreshAllCardFavStates() {
+  document.querySelectorAll('.fav-btn').forEach(btn => {
+    const saved = isFavorited(btn.dataset.name, btn.dataset.address);
+    btn.classList.toggle('saved', saved);
+    btn.textContent = saved ? '♥' : '♡';
+    btn.title = saved ? '已收藏' : '收藏';
+  });
+}
+
+/* ── VIEW SWITCHING ── */
+function showChatView() {
+  currentView = 'chat';
+  document.getElementById('chatWrap').style.display = '';
+  document.getElementById('inputBar').style.display = '';
+  document.getElementById('favView').classList.remove('active');
+  renderMessages();
+  renderSidebar();
+}
+
+function showFavView() {
+  currentView = 'favorites';
+  document.getElementById('chatWrap').style.display = 'none';
+  document.getElementById('inputBar').style.display = 'none';
+  document.getElementById('favView').classList.add('active');
+  renderFavView();
+  renderSidebar();
+}
+
+function renderFavView() {
+  const el = document.getElementById('favView');
+  const f = loadFavs();
+  const colls = Object.keys(f).filter(c => f[c].length > 0);
+  el.innerHTML = `<div class="fav-view-title">我的收藏</div><div class="fav-view-sub">你收藏的好店，按合集整理</div>`;
+  if (colls.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'fav-empty-state';
+    empty.innerHTML = `<div class="fav-empty-icon">🍽️</div><div class="fav-empty-title">还没有收藏的餐厅</div><div class="fav-empty-sub">在聊天中搜索餐厅，<br>点击卡片右上角的 ♡ 按钮保存</div>`;
+    el.appendChild(empty);
+    return;
+  }
+  colls.forEach(collName => {
+    const list = f[collName];
+    const section = document.createElement('div');
+    section.className = 'fav-coll-section';
+    const header = document.createElement('div');
+    header.className = 'fav-coll-header';
+    header.innerHTML = `<div class="fav-coll-name">${esc(collName)}</div><span class="fav-coll-badge">${list.length} 家</span><button class="fav-coll-del-btn" title="删除整个合集">×</button>`;
+    header.querySelector('.fav-coll-del-btn').addEventListener('click', () => {
+      const f2 = loadFavs(); delete f2[collName]; saveFavs(f2);
+      renderFavView(); refreshAllCardFavStates();
+    });
+    const restList = document.createElement('div');
+    list.forEach(r => {
+      const row = document.createElement('div');
+      row.className = 'fav-rest-row';
+      row.innerHTML = `
+        <div class="fav-rest-info">
+          <div class="fav-rest-name">${esc(r.name)}</div>
+          <div class="fav-rest-meta">${r.rating ? '⭐ ' + esc(r.rating) + ' 分' : ''}${r.rating && r.address ? '  ·  ' : ''}${r.address ? '📍 ' + esc(r.address) : ''}</div>
+          ${r.mapUrl ? `<a class="fav-rest-link" href="${r.mapUrl}" target="_blank">查看地图 →</a>` : ''}
+        </div>
+        <button class="fav-rest-del" title="从此合集移除">×</button>
+      `;
+      row.querySelector('.fav-rest-del').addEventListener('click', () => {
+        setRestaurantInCollection(r, collName, false);
+        renderFavView(); refreshAllCardFavStates();
+      });
+      restList.appendChild(row);
+    });
+    section.appendChild(header);
+    section.appendChild(restList);
+    el.appendChild(section);
+  });
 }
 
 /* ── FOLLOW-UP CHIPS ── */
@@ -1246,6 +1791,7 @@ function init() {
   document.getElementById('newChatBtn').addEventListener('click', createNewSession);
   document.getElementById('hamburgerBtn').addEventListener('click', toggleSidebar);
   document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
+  initFavPopover();
 }
 
 document.addEventListener('DOMContentLoaded', init);
