@@ -691,6 +691,36 @@
   @media (max-width: 480px) {
     .cards-grid { grid-template-columns: 1fr; }
   }
+
+  /* ── FOLLOW-UP CHIPS ── */
+  .follow-up-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .follow-up-chip {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--label-size);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+    padding: 6px 16px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    font-weight: var(--body-weight);
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+
+  .follow-up-chip:hover {
+    background: var(--color-accent);
+    color: white;
+    border-color: var(--color-accent);
+  }
 </style>
 </head>
 <body>
@@ -1040,6 +1070,47 @@ function starStr(r) {
   return '★'.repeat(f) + (n%1>=0.5?'½':'') + '☆'.repeat(5-f-(n%1>=0.5?1:0));
 }
 
+/* ── FOLLOW-UP CHIPS ── */
+async function generateFollowUpChips(userQuestion, sessionSid, sessionId) {
+  const prompt = `根据用户问题「${userQuestion}」和当前给出的餐厅推荐结果，\n生成 3 个适合继续追问的简短问题，要求：\n1. 每个问题不超过 12 个字\n2. 要自然，像用户下一步真的会点的追问\n3. 尽量从这些方向里挑选：更便宜、适合约会、适合自习、vegan、离市中心近、营业更晚、人均更低、氛围更安静、适合一个人吃、当地特色\n4. 不要重复用户原问题\n5. 只返回 JSON 数组，格式必须是：\n["问题1","问题2","问题3"]\n不要返回 markdown，不要返回解释，不要返回代码块`;
+  let chips;
+  try {
+    const res = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'sendMessage', sessionId: sessionSid, chatInput: prompt })
+    });
+    const data = await res.json();
+    const raw = data.output || data.text || data.message || '';
+    const match = raw.match(/\[[\s\S]*?\]/);
+    if (!match) return;
+    chips = JSON.parse(match[0]);
+    if (!Array.isArray(chips) || chips.length === 0) return;
+    chips = chips.slice(0, 3).filter(c => typeof c === 'string' && c.trim());
+    if (chips.length === 0) return;
+  } catch {
+    return;
+  }
+  if (currentSessionId !== sessionId) return;
+  const chatWrap = document.getElementById('chatWrap');
+  const botWraps = chatWrap.querySelectorAll('.bot-wrap');
+  if (botWraps.length === 0) return;
+  const container = document.createElement('div');
+  container.className = 'follow-up-chips';
+  chips.forEach(label => {
+    const chip = document.createElement('span');
+    chip.className = 'follow-up-chip';
+    chip.textContent = label;
+    chip.addEventListener('click', () => {
+      container.remove();
+      suggest(label);
+    });
+    container.appendChild(chip);
+  });
+  botWraps[botWraps.length - 1].appendChild(container);
+  scroll();
+}
+
 /* ── NETWORK ── */
 async function callAPI(text, sessionSid) {
   const res = await fetch(WEBHOOK_URL, {
@@ -1080,6 +1151,7 @@ async function send() {
   session.messages.push({ role: 'user', text });
   saveSessions();
   appendUserBubble(text);
+  document.querySelectorAll('.follow-up-chips').forEach(el => el.remove());
   showTyping();
 
   let output = null, errorType = null;
@@ -1095,7 +1167,12 @@ async function send() {
   if (output !== null) {
     session.messages.push({ role: 'bot', text: output });
     saveSessions();
-    if (currentSessionId === sessionId) appendBotBubbles(output);
+    if (currentSessionId === sessionId) {
+      appendBotBubbles(output);
+      if (parseRestaurants(output).restaurants.length > 0) {
+        generateFollowUpChips(text, session.sid, sessionId);
+      }
+    }
   } else {
     if (currentSessionId === sessionId) appendErrorBubble(errorType, text);
   }
@@ -1116,7 +1193,7 @@ async function resendRequest(lastUserText) {
   for (let i = rows.length - 1; i >= 0; i--) {
     if (rows[i].querySelector('.error-bubble')) { rows[i].remove(); break; }
   }
-
+  document.querySelectorAll('.follow-up-chips').forEach(el => el.remove());
   showTyping();
 
   const session = getCurrentSession();
@@ -1135,7 +1212,12 @@ async function resendRequest(lastUserText) {
   if (output !== null) {
     session.messages.push({ role: 'bot', text: output });
     saveSessions();
-    if (currentSessionId === sessionId) appendBotBubbles(output);
+    if (currentSessionId === sessionId) {
+      appendBotBubbles(output);
+      if (parseRestaurants(output).restaurants.length > 0) {
+        generateFollowUpChips(lastUserText, session.sid, sessionId);
+      }
+    }
   } else {
     if (currentSessionId === sessionId) appendErrorBubble(errorType, lastUserText);
   }
