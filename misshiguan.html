@@ -6,6 +6,7 @@
 <title>觅食官 · 美食探店助手</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root {
     --logo-size:              31px;
@@ -1043,6 +1044,186 @@
     margin-bottom: 8px;
   }
   .fav-empty-sub { font-size: 13px; color: var(--color-text-secondary); opacity: 0.65; line-height: 1.7; }
+
+  /* ── RESTAURANT GROUP (share button row) ── */
+  .restaurant-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .restaurant-group-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 8px;
+  }
+
+  .share-group-btn {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: 100px;
+    padding: 4px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    letter-spacing: 0.02em;
+    line-height: 1.6;
+    opacity: 0.7;
+  }
+
+  .share-group-btn:hover {
+    background: var(--color-accent);
+    color: white;
+    border-color: var(--color-accent);
+    opacity: 1;
+  }
+
+  /* ── SHARE PANEL OVERLAY ── */
+  .share-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26,18,9,0.4);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+  }
+  .share-overlay.open { display: flex; }
+
+  .share-panel {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    padding: 24px 22px 20px;
+    width: 360px;
+    max-width: calc(100vw - 40px);
+    max-height: calc(100vh - 100px);
+    box-shadow: 0 12px 48px rgba(0,0,0,0.16);
+    animation: fadeUp 0.2s ease;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .share-panel-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+
+  .share-panel-sub {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  .share-rest-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 16px;
+    max-height: 260px;
+  }
+  .share-rest-list::-webkit-scrollbar { width: 3px; }
+  .share-rest-list::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
+
+  .share-rest-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.12s;
+    user-select: none;
+  }
+  .share-rest-item:hover { background: var(--color-bg); }
+
+  .share-rest-check {
+    width: 17px;
+    height: 17px;
+    border: 1.5px solid var(--color-border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 10px;
+    color: white;
+    background: white;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .share-rest-item.checked .share-rest-check {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  .share-rest-label { flex: 1; min-width: 0; }
+  .share-rest-name {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--color-text-main);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .share-rest-meta {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .share-panel-actions {
+    display: flex;
+    gap: 8px;
+    padding-top: 14px;
+    border-top: 1px solid var(--color-border);
+    flex-shrink: 0;
+  }
+
+  .share-cancel-btn {
+    flex: 1;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--btn-radius);
+    padding: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background 0.15s;
+    font-weight: 400;
+  }
+  .share-cancel-btn:hover { background: var(--color-border); }
+
+  .share-confirm-btn {
+    flex: 2;
+    background: var(--color-accent);
+    border: none;
+    border-radius: var(--btn-radius);
+    padding: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: white;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .share-confirm-btn:hover:not(:disabled) { opacity: 0.85; }
+  .share-confirm-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 </style>
 </head>
 <body>
@@ -1100,6 +1281,18 @@
     <div class="fav-new-row">
       <input class="fav-new-input" id="favNewInput" placeholder="新建合集名称" autocomplete="off" />
       <button class="fav-new-btn" id="favNewBtn">添加</button>
+    </div>
+  </div>
+</div>
+
+<div class="share-overlay" id="shareOverlay">
+  <div class="share-panel" id="sharePanel">
+    <div class="share-panel-title">分享这份推荐</div>
+    <div class="share-panel-sub">选择想放进图片里的餐厅</div>
+    <div class="share-rest-list" id="shareRestList"></div>
+    <div class="share-panel-actions">
+      <button class="share-cancel-btn" id="shareCancelBtn">取消</button>
+      <button class="share-confirm-btn" id="shareConfirmBtn">生成图片</button>
     </div>
   </div>
 </div>
@@ -1343,6 +1536,18 @@ function appendBotBubbles(text) {
   });
 
   if (restaurants.length > 0) {
+    const group = document.createElement('div');
+    group.className = 'restaurant-group';
+
+    const groupHeader = document.createElement('div');
+    groupHeader.className = 'restaurant-group-header';
+    const shareBtn = document.createElement('button');
+    shareBtn.className = 'share-group-btn';
+    shareBtn.textContent = '↗ 分享';
+    shareBtn.addEventListener('click', () => openSharePanel(restaurants));
+    groupHeader.appendChild(shareBtn);
+    group.appendChild(groupHeader);
+
     const grid = document.createElement('div');
     grid.className = 'cards-grid';
     restaurants.forEach((r, i) => {
@@ -1369,7 +1574,8 @@ function appendBotBubbles(text) {
       card.appendChild(favBtn);
       grid.appendChild(card);
     });
-    wrap.appendChild(grid);
+    group.appendChild(grid);
+    wrap.appendChild(group);
   } else {
     const p = document.createElement('div');
     p.className = 'plain-bubble';
@@ -1792,6 +1998,156 @@ function init() {
   document.getElementById('hamburgerBtn').addEventListener('click', toggleSidebar);
   document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
   initFavPopover();
+  initSharePanel();
+}
+
+/* ── SHARE FUNCTIONALITY ── */
+let _sharePendingRestaurants = null;
+
+function openSharePanel(restaurants) {
+  _sharePendingRestaurants = restaurants.map(r => ({ ...r, selected: true }));
+  renderShareRestList();
+  document.getElementById('shareConfirmBtn').disabled = false;
+  document.getElementById('shareConfirmBtn').textContent = '生成图片';
+  document.getElementById('shareOverlay').classList.add('open');
+}
+
+function closeSharePanel() {
+  document.getElementById('shareOverlay').classList.remove('open');
+  _sharePendingRestaurants = null;
+}
+
+function renderShareRestList() {
+  const list = document.getElementById('shareRestList');
+  list.innerHTML = '';
+  if (!_sharePendingRestaurants) return;
+  _sharePendingRestaurants.forEach((r, i) => {
+    const item = document.createElement('div');
+    item.className = 'share-rest-item' + (r.selected ? ' checked' : '');
+    const metaParts = [];
+    if (r.rating) metaParts.push('⭐ ' + esc(r.rating));
+    if (r.address) metaParts.push(esc(r.address));
+    item.innerHTML = `
+      <div class="share-rest-check">${r.selected ? '✓' : ''}</div>
+      <div class="share-rest-label">
+        <div class="share-rest-name">${esc(r.name)}</div>
+        ${metaParts.length ? `<div class="share-rest-meta">${metaParts.join(' · ')}</div>` : ''}
+      </div>
+    `;
+    item.addEventListener('click', () => {
+      _sharePendingRestaurants[i].selected = !_sharePendingRestaurants[i].selected;
+      renderShareRestList();
+      const anySelected = _sharePendingRestaurants.some(x => x.selected);
+      document.getElementById('shareConfirmBtn').disabled = !anySelected;
+    });
+    list.appendChild(item);
+  });
+  const anySelected = _sharePendingRestaurants.some(x => x.selected);
+  document.getElementById('shareConfirmBtn').disabled = !anySelected;
+}
+
+function initSharePanel() {
+  document.getElementById('shareOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('shareOverlay')) closeSharePanel();
+  });
+  document.getElementById('shareCancelBtn').addEventListener('click', closeSharePanel);
+  document.getElementById('shareConfirmBtn').addEventListener('click', doGenerateShareImage);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('shareOverlay').classList.contains('open')) closeSharePanel();
+  });
+}
+
+async function doGenerateShareImage() {
+  if (!_sharePendingRestaurants) return;
+  const selected = _sharePendingRestaurants.filter(r => r.selected);
+  if (selected.length === 0) return;
+  const btn = document.getElementById('shareConfirmBtn');
+  btn.disabled = true;
+  btn.textContent = '生成中…';
+  try {
+    await generateShareImage(selected);
+    closeSharePanel();
+  } catch {
+    btn.disabled = false;
+    btn.textContent = '生成图片';
+    showShareToast('生成失败，请重试');
+  }
+}
+
+async function generateShareImage(restaurants) {
+  if (typeof html2canvas !== 'function') {
+    showShareToast('分享功能加载中，请稍后重试');
+    throw new Error('html2canvas not loaded');
+  }
+
+  const d = new Date();
+  const dateStr = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  const filename = `觅食官_${dateStr}.png`;
+
+  const restCardsHtml = restaurants.map((r, i) => `
+    <div style="background:#FDFAF6;border:1px solid #E5DDD4;border-radius:12px;padding:18px 20px;margin-bottom:10px;">
+      <div style="font-family:'DM Sans',sans-serif;font-size:10px;font-weight:500;color:#CCBFB3;letter-spacing:0.06em;margin-bottom:7px;">${String(i+1).padStart(2,'0')}</div>
+      <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:600;color:#1A1209;line-height:1.3;margin-bottom:7px;letter-spacing:-0.005em;">${esc(r.name)}</div>
+      ${r.rating ? `<div style="font-family:'DM Sans',sans-serif;font-size:12px;color:#C4622D;margin-bottom:5px;"><span>${starStr(r.rating)}</span> <span style="color:#7A6858;">${esc(r.rating)} 分</span></div>` : ''}
+      ${r.address ? `<div style="font-family:'DM Sans',sans-serif;font-size:12px;color:#7A6858;margin-bottom:4px;">📍 ${esc(r.address)}</div>` : ''}
+      ${r.hours ? `<div style="font-family:'DM Sans',sans-serif;font-size:12px;color:#7A6858;margin-bottom:4px;">🕐 ${esc(r.hours)}</div>` : ''}
+      ${r.quote ? `<div style="font-family:'Playfair Display',serif;font-style:italic;font-size:13px;color:#7A6858;line-height:1.65;border-left:2px solid #C4622D;padding-left:11px;margin-top:9px;">${esc(r.quote)}</div>` : ''}
+    </div>
+  `).join('');
+
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:480px;background:#F7F3EE;font-family:\'DM Sans\',sans-serif;-webkit-font-smoothing:antialiased;box-sizing:border-box;';
+  container.innerHTML = `
+    <div style="padding:36px 32px 28px;">
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px;">
+        <span style="font-family:'Playfair Display',serif;font-size:26px;font-weight:600;color:#1A1209;letter-spacing:-0.01em;line-height:1;">觅食官</span>
+        <span style="font-family:'DM Sans',sans-serif;font-size:13px;color:#7A6858;font-weight:400;">· Find Good Food</span>
+      </div>
+      <div style="width:28px;height:2px;background:#C4622D;border-radius:1px;margin-bottom:16px;"></div>
+      <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:#7A6858;margin-bottom:24px;letter-spacing:0.02em;opacity:0.8;">今天这份推荐，想先存下来</div>
+      ${restCardsHtml}
+      <div style="margin-top:20px;padding-top:14px;border-top:1px solid #E5DDD4;font-family:'DM Sans',sans-serif;font-size:10px;color:#7A6858;opacity:0.4;letter-spacing:0.06em;text-align:center;">rachelchen77ccc.github.io/misshiguan</div>
+    </div>
+  `;
+  document.body.appendChild(container);
+
+  try {
+    const canvas = await html2canvas(container, {
+      backgroundColor: '#F7F3EE',
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      width: 480,
+      height: container.scrollHeight,
+      windowWidth: 480,
+      windowHeight: container.scrollHeight,
+    });
+    const dataUrl = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.download = filename;
+    a.href = dataUrl;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) showShareToast('图片已生成，如未保存请长按图片');
+  } finally {
+    document.body.removeChild(container);
+  }
+}
+
+function showShareToast(msg) {
+  let t = document.getElementById('shareToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'shareToast';
+    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(26,18,9,0.82);color:white;font-family:\'DM Sans\',sans-serif;font-size:13px;padding:10px 22px;border-radius:100px;z-index:9999;white-space:nowrap;pointer-events:none;transition:opacity 0.3s;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3000);
 }
 
 document.addEventListener('DOMContentLoaded', init);
