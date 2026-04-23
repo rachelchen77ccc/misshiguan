@@ -40,6 +40,10 @@
     color: var(--color-text-main);
     -webkit-font-smoothing: antialiased;
   }
+  body.resizing-sidebar {
+    cursor: col-resize;
+    user-select: none;
+  }
 
   /* ── APP SHELL ── */
   .app-shell {
@@ -63,6 +67,31 @@
   .sidebar.collapsed {
     width: 0;
     opacity: 0;
+    pointer-events: none;
+  }
+  .sidebar-resizer {
+    width: 8px;
+    flex-shrink: 0;
+    cursor: col-resize;
+    position: relative;
+    background: transparent;
+  }
+  .sidebar-resizer::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 0;
+    width: 1px;
+    height: 100%;
+    background: rgba(122, 104, 88, 0.14);
+    transition: background 0.15s;
+  }
+  .sidebar-resizer:hover::after,
+  body.resizing-sidebar .sidebar-resizer::after {
+    background: rgba(196, 98, 45, 0.45);
+  }
+  .sidebar.collapsed + .sidebar-resizer {
+    width: 0;
     pointer-events: none;
   }
 
@@ -163,6 +192,54 @@
 
   .session-item:hover .session-del { opacity: 1; }
   .session-del:hover { color: var(--color-accent); }
+  .session-edit {
+    opacity: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    padding: 0 3px;
+    line-height: 1;
+    border-radius: 3px;
+    transition: opacity 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+  .session-item:hover .session-edit { opacity: 1; }
+  .session-edit:hover { color: var(--color-accent); }
+  .session-item.editing {
+    background: var(--color-card);
+    border-color: var(--color-border);
+    cursor: default;
+  }
+  .session-rename-input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    border-radius: 7px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--color-text-main);
+    padding: 5px 8px;
+    outline: none;
+  }
+  .session-rename-input:focus { border-color: var(--color-accent); }
+  .session-rename-save,
+  .session-rename-cancel {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    padding: 0 3px;
+    line-height: 1;
+    border-radius: 3px;
+    flex-shrink: 0;
+    transition: color 0.15s;
+  }
+  .session-rename-save:hover,
+  .session-rename-cancel:hover { color: var(--color-accent); }
 
   /* ── SIDEBAR OVERLAY (mobile) ── */
   .sidebar-overlay {
@@ -305,6 +382,229 @@
     line-height: 1.8;
     font-weight: var(--body-weight);
     max-width: 400px;
+  }
+  .welcome-mode-sub {
+    margin-top: 8px;
+    max-width: 520px;
+  }
+  .home-entry-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 18px 0 14px;
+    max-width: 640px;
+  }
+  .home-entry-card {
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+    border-radius: 14px;
+    padding: 14px 14px 13px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  }
+  .home-entry-card:hover {
+    border-color: #DFC8B7;
+    background: #FBF7F2;
+    transform: translateY(-1px);
+  }
+  .home-entry-card.active {
+    border-color: #E3B89B;
+    background: #FFF5EF;
+  }
+  .home-entry-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    color: var(--color-text-main);
+    line-height: 1.2;
+    margin-bottom: 5px;
+    letter-spacing: -0.01em;
+  }
+  .home-entry-sub {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+  }
+  .decide-result-card {
+    margin-top: 14px;
+    max-width: 520px;
+    border: 1px solid #E7D8CC;
+    background: #FFF7F1;
+    border-radius: 14px;
+    padding: 14px 15px 13px;
+    animation: fadeUp 0.2s ease;
+  }
+  .decide-result-eyebrow {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    opacity: 0.7;
+    margin-bottom: 4px;
+  }
+  .decide-result-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    line-height: 1.35;
+    color: var(--color-text-main);
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+  }
+  .decide-result-direction {
+    display: inline-block;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    line-height: 1;
+    color: var(--color-accent);
+    border: 1px solid #E7C5B0;
+    background: #FFF3EA;
+    border-radius: 999px;
+    padding: 4px 9px;
+    margin-bottom: 8px;
+  }
+  .decide-result-sub {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+    margin-bottom: 10px;
+  }
+  .decide-result-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .decide-cta-btn,
+  .decide-ghost-btn {
+    border-radius: 999px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: opacity 0.15s, background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .decide-cta-btn {
+    border: 1px solid #E3B89B;
+    background: #FFF1E8;
+    color: var(--color-accent);
+  }
+  .decide-cta-btn:hover { opacity: 0.85; }
+  .decide-cta-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .decide-ghost-btn {
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+    color: var(--color-text-secondary);
+  }
+  .decide-ghost-btn:hover { background: var(--color-bg); }
+  .decide-ghost-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .decide-wheel-card {
+    margin-top: 12px;
+    max-width: 560px;
+    border: 1px solid var(--color-border);
+    background: linear-gradient(165deg, #FCF8F2 0%, #F7F1E9 100%);
+    border-radius: 16px;
+    padding: 14px 14px 12px;
+  }
+  .decide-wheel-head {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    line-height: 1.25;
+    color: var(--color-text-main);
+    letter-spacing: -0.01em;
+    margin-bottom: 2px;
+  }
+  .decide-wheel-sub {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin-bottom: 10px;
+  }
+  .decide-wheel-wrap {
+    width: 260px;
+    height: 260px;
+    margin: 0 auto 10px;
+    position: relative;
+  }
+  .decide-wheel-pointer {
+    position: absolute;
+    left: 50%;
+    top: -6px;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 13px solid #C4622D;
+    z-index: 3;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.12));
+  }
+  .decide-wheel {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 1px solid #E5D5C9;
+    position: relative;
+    background:
+      radial-gradient(circle at center, rgba(255,255,255,0) 0 36%, rgba(255,255,255,0.65) 36% 38%, rgba(255,255,255,0) 38% 100%),
+      conic-gradient(from -12deg, #F2DED0, #F9E8D9, #F3DBC7, #E9D4C7, #F4E3D3, #EED7C8, #F7E7D8, #EAD6C9, #F2DED0);
+    box-shadow: inset 0 0 0 8px rgba(255,255,255,0.62), 0 6px 20px rgba(98,71,46,0.08);
+  }
+  .decide-wheel.spinning {
+    box-shadow: inset 0 0 0 8px rgba(255,255,255,0.62), 0 10px 26px rgba(98,71,46,0.15);
+  }
+  .decide-wheel-seg {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 90px;
+    margin-left: -45px;
+    transform: rotate(var(--a)) translateY(-106px) rotate(calc(-1 * var(--a)));
+    text-align: center;
+  }
+  .decide-wheel-seg span {
+    display: inline-block;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    line-height: 1.2;
+    color: #6C5B4B;
+    background: rgba(255,255,255,0.72);
+    border: 1px solid rgba(208,188,172,0.8);
+    border-radius: 999px;
+    padding: 4px 8px;
+    max-width: 88px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .decide-wheel-seg.active span {
+    border-color: #E3B89B;
+    color: var(--color-accent);
+    background: #FFF3EA;
+  }
+  .decide-wheel-center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 1px solid #E2CEC0;
+    background: #FFF9F2;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 23px;
+    color: #9C7A63;
+    letter-spacing: 0.02em;
+  }
+  .decide-wheel-controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
   .chips {
@@ -587,6 +887,37 @@
     padding: 14px var(--page-margin) 20px;
     flex-shrink: 0;
   }
+  .mode-switch {
+    max-width: 980px;
+    margin: 0 auto 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-bg);
+    padding: 4px;
+  }
+  .mode-switch-btn {
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1;
+    border-radius: 999px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, opacity 0.15s;
+    opacity: 0.85;
+    white-space: nowrap;
+  }
+  .mode-switch-btn.active {
+    background: #FFF3EE;
+    color: var(--color-accent);
+    opacity: 1;
+  }
+  .mode-switch-btn:hover { opacity: 1; }
 
   .input-inner {
     max-width: 980px;
@@ -676,6 +1007,7 @@
       pointer-events: none;
       transition: transform 0.25s ease;
     }
+    .sidebar-resizer { display: none; }
 
     .sidebar.mobile-open {
       transform: translateX(0);
@@ -687,6 +1019,9 @@
     .cards-grid { grid-template-columns: 1fr 1fr; }
     .chat-wrap  { padding: 24px 16px 20px; }
     .input-bar  { padding: 12px 16px 18px; }
+    .home-entry-grid { grid-template-columns: 1fr; max-width: 460px; }
+    .decide-wheel-wrap { width: 236px; height: 236px; }
+    .decide-wheel-seg { transform: rotate(var(--a)) translateY(-96px) rotate(calc(-1 * var(--a))); }
   }
 
   @media (max-width: 480px) {
@@ -1477,6 +1812,7 @@
       <span>我的收藏</span>
     </div>
   </aside>
+  <div class="sidebar-resizer" id="sidebarResizer" aria-hidden="true"></div>
 
   <div class="main-area">
 
@@ -1494,13 +1830,17 @@
     <div class="fav-view" id="favView"></div>
 
     <div class="input-bar" id="inputBar">
+      <div class="mode-switch" id="modeSwitch">
+        <button class="mode-switch-btn active" data-mode="recommend">推荐餐厅</button>
+        <button class="mode-switch-btn" data-mode="decide">今天吃什么</button>
+      </div>
       <div class="input-inner">
         <textarea id="inp" placeholder="例如：帮我找广州珠江新城适合约会的粤菜…" rows="1"></textarea>
         <button class="send-btn" id="btn">
           <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
       </div>
-      <p class="foot-note">数据来源 Google Places · 实时搜索 · 仅供参考</p>
+      <p class="foot-note">数据来源 Google Places · 实时检索结果 · 仅供参考</p>
     </div>
 
   </div>
@@ -1534,11 +1874,19 @@
 <script>
 const WEBHOOK_URL = 'https://rayrayonthemove.app.n8n.cloud/webhook/86b2b344-ceaa-4601-92b8-2dc810150356/chat';
 const STORAGE_KEY = 'misshiguan_sessions_v2';
+const SIDEBAR_WIDTH_KEY = 'misshiguan_sidebar_width_v1';
+const SIDEBAR_MIN_WIDTH = 208;
+const SIDEBAR_MAX_WIDTH = 360;
 
 let sessions = [];
 let currentSessionId = null;
 let busy = false;
 let currentView = 'chat'; // 'chat' | 'favorites'
+let currentMode = 'recommend'; // 'recommend' | 'decide'
+let sessionRenamingId = null;
+let sessionRenameDraft = '';
+let sidebarWidth = 240;
+let isSidebarResizing = false;
 
 const FAVS_KEY = 'misshiguan_favorites_v2';
 let _favPopoverRestaurant = null;
@@ -1546,6 +1894,80 @@ let favExpandedCollection = null;
 let favPendingDeleteCollection = null;
 let favRenamingCollection = null;
 let favRenameDraft = '';
+
+const RECOMMEND_PLACEHOLDER = '例如：帮我找广州珠江新城适合约会的粤菜…';
+const DECIDE_PLACEHOLDER = '例如：帮我决定今天吃什么，想吃便宜又热乎的…';
+const RECOMMEND_WELCOME_CHIPS = [
+  '上海外滩高档餐厅',
+  '北京三里屯咖啡厅',
+  '成都平价川菜',
+  'Berlin brunch spots'
+];
+const DECIDE_CHIPS = [
+  '想吃热乎的',
+  '想吃便宜点',
+  '想吃开心一点',
+  '想吃清淡点',
+  '想吃有氛围的',
+  '完全随机'
+];
+const DECIDE_MAJOR_CUISINES = ['中餐', '日料', '韩餐', '法餐', '意餐', '东南亚菜', '南亚菜', '地中海菜', '美式', '墨西哥菜'];
+const DECIDE_CHINESE_REGIONAL = ['云南菜', '贵州菜', '川菜', '湘菜', '粤菜', '江浙菜', '东北菜', '西北菜', '潮汕菜', '客家菜', '新疆菜'];
+const DECIDE_FORMAT_TYPES = ['火锅', '烧烤', '面食', '饺子', '盖饭', 'brunch', '快餐', '素食', '小酒馆', '汤面', '日式定食', '烤肉'];
+const DECIDE_SCENE_STYLES = ['热乎的', '重口的', '清淡的', '治愈的', '适合一个人', '适合朋友聚餐', '适合约会'];
+let decideResult = null;
+let decideStarterActive = false;
+let decideRecentResultIds = [];
+let decideWheelOptions = [];
+let decideWheelRotation = 0;
+let decideWheelHighlight = -1;
+let decideWheelSpinning = false;
+let decideWheelTimer = null;
+
+function createDecideEntry(text, direction, tags) {
+  return { id: `${direction}|${text}`, text, direction, tags };
+}
+
+function buildDecideDecisionPool() {
+  const out = [];
+  DECIDE_MAJOR_CUISINES.forEach(c => {
+    out.push(createDecideEntry(`要不试试${c}`, c, ['random', 'vibe']));
+    out.push(createDecideEntry(`今天适合来一顿${c}`, c, ['random']));
+  });
+  DECIDE_CHINESE_REGIONAL.forEach(c => {
+    out.push(createDecideEntry(`今天适合吃点${c}`, c, ['random', 'hot']));
+    out.push(createDecideEntry(`要不换个口味试试${c}`, c, ['random', 'vibe']));
+  });
+  DECIDE_FORMAT_TYPES.forEach(t => {
+    out.push(createDecideEntry(`今天来点${t}怎么样`, t, ['random']));
+    out.push(createDecideEntry(`要不就吃${t}，省心也满足`, t, ['cheap', 'comfort']));
+  });
+  DECIDE_SCENE_STYLES.forEach(s => {
+    out.push(createDecideEntry(`今天适合吃点${s}的`, s, ['random']));
+  });
+  DECIDE_CHINESE_REGIONAL.forEach(c => {
+    out.push(createDecideEntry(`今天适合吃点热乎的${c}`, c, ['hot', 'comfort']));
+    out.push(createDecideEntry(`预算友好点的话，${c}会比较稳`, c, ['cheap']));
+  });
+  ['日式定食', '汤面', '素食', 'brunch', '粤菜', '江浙菜', '东南亚菜'].forEach(x => {
+    out.push(createDecideEntry(`今天适合一个人吃点${x}`, x, ['solo', 'light']));
+  });
+  ['烧烤', '火锅', '韩餐', '小酒馆', '川菜'].forEach(x => {
+    out.push(createDecideEntry(`要不约朋友吃${x}，气氛更到位`, x, ['group', 'happy', 'vibe']));
+  });
+  ['法餐', '意餐', '地中海菜', '日料', 'brunch'].forEach(x => {
+    out.push(createDecideEntry(`今天想要点氛围感，可以试试${x}`, x, ['date', 'vibe']));
+  });
+  ['云南菜', '贵州菜', '新疆菜', '墨西哥菜', '南亚菜'].forEach(x => {
+    out.push(createDecideEntry(`想吃重口一点的话，${x}挺带劲`, x, ['heavy', 'happy']));
+  });
+  ['粤菜', '江浙菜', '日料', '素食', '汤面', '东南亚菜'].forEach(x => {
+    out.push(createDecideEntry(`今天走清淡路线，${x}会舒服很多`, x, ['light', 'comfort']));
+  });
+  return out;
+}
+
+const DECIDE_DECISION_POOL = buildDecideDecisionPool();
 
 /* ── FAVORITES HELPERS ── */
 function loadFavs() {
@@ -1609,6 +2031,231 @@ function isRateLimitError(text) {
   return lower.includes('error in workflow') || lower.includes('rate limit') || lower.includes('too many requests');
 }
 
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function pickNoRepeatDecision(candidates) {
+  const source = candidates.length > 0 ? candidates : DECIDE_DECISION_POOL;
+  const fresh = source.filter(item => !decideRecentResultIds.includes(item.id));
+  const chosen = pickRandom(fresh.length > 0 ? fresh : source);
+  decideRecentResultIds.push(chosen.id);
+  if (decideRecentResultIds.length > 14) decideRecentResultIds.shift();
+  return chosen;
+}
+
+function createWheelOptions() {
+  const copied = [...DECIDE_DECISION_POOL];
+  copied.sort(() => Math.random() - 0.5);
+  return copied.slice(0, 8);
+}
+
+function ensureWheelOptions() {
+  if (decideWheelOptions.length === 0) decideWheelOptions = createWheelOptions();
+}
+
+function clearDecideWheelTimer() {
+  if (!decideWheelTimer) return;
+  clearTimeout(decideWheelTimer);
+  decideWheelTimer = null;
+}
+
+function resetDecideStarter() {
+  clearDecideWheelTimer();
+  decideResult = null;
+  decideWheelRotation = 0;
+  decideWheelHighlight = -1;
+  decideWheelSpinning = false;
+  decideWheelOptions = createWheelOptions();
+}
+
+function filterDecidePoolByLabel(label) {
+  const tagMap = {
+    '想吃热乎的': ['hot', 'comfort'],
+    '想吃便宜点': ['cheap'],
+    '想吃开心一点': ['happy', 'group', 'heavy'],
+    '想吃清淡点': ['light', 'solo'],
+    '想吃有氛围的': ['vibe', 'date']
+  };
+  const tags = tagMap[label] || ['random'];
+  const candidates = DECIDE_DECISION_POOL.filter(item => item.tags.some(tag => tags.includes(tag)));
+  return candidates.length > 0 ? candidates : DECIDE_DECISION_POOL;
+}
+
+function buildDecideResult(label, fixedEntry) {
+  const noteMap = {
+    '想吃热乎的': '给你挑了个更暖胃的方向。',
+    '想吃便宜点': '给你偏向预算友好的选择。',
+    '想吃开心一点': '给你偏热闹、有满足感的吃法。',
+    '想吃清淡点': '给你偏轻盈、没负担的方向。',
+    '想吃有氛围的': '给你偏氛围感更好的方向。',
+    '完全随机': '这次就交给命运签。',
+  };
+  const picked = fixedEntry || pickNoRepeatDecision(label === '完全随机' ? DECIDE_DECISION_POOL : filterDecidePoolByLabel(label));
+  return {
+    id: picked.id,
+    source: label,
+    text: picked.text,
+    direction: picked.direction,
+    note: noteMap[label] || '先定一个方向，再继续找店。'
+  };
+}
+
+function buildFindByCuisinePrompt(result) {
+  const direction = result && result.direction ? result.direction : '今天状态合适的方向';
+  return `按「${direction}」这个方向帮我找餐厅，我接下来会补充城市或位置`;
+}
+
+function chooseDecideChip(label) {
+  if (label === '完全随机') return;
+  decideResult = buildDecideResult(label);
+  decideWheelHighlight = -1;
+  if (currentView === 'chat' && decideStarterActive) renderMessages();
+}
+
+function runDecideWheel(welcomeEl) {
+  if (decideWheelSpinning) return;
+  ensureWheelOptions();
+  decideWheelSpinning = true;
+  const wheel = welcomeEl.querySelector('.decide-wheel');
+  const segCount = decideWheelOptions.length;
+  const step = 360 / segCount;
+  const picked = pickNoRepeatDecision(decideWheelOptions);
+  const idx = decideWheelOptions.findIndex(item => item.id === picked.id);
+  const centerAngle = idx * step + step / 2;
+  const alignToPointer = 360 - centerAngle;
+  const jitter = Math.random() * 8 - 4;
+  const targetRotation = decideWheelRotation + 1260 + alignToPointer + jitter;
+  if (wheel) {
+    wheel.style.transition = 'transform 1500ms cubic-bezier(0.2, 0.8, 0.15, 1)';
+    requestAnimationFrame(() => { wheel.style.transform = `rotate(${targetRotation}deg)`; });
+  }
+  clearDecideWheelTimer();
+  decideWheelTimer = setTimeout(() => {
+    decideWheelSpinning = false;
+    decideWheelRotation = targetRotation;
+    decideWheelHighlight = idx;
+    decideResult = buildDecideResult('完全随机', picked);
+    renderMessages();
+  }, 1550);
+}
+
+function openDecideStarter() {
+  currentMode = 'decide';
+  decideStarterActive = true;
+  resetDecideStarter();
+  syncModeUI();
+  if (currentView === 'chat') renderMessages();
+}
+
+function syncModeUI() {
+  const inp = document.getElementById('inp');
+  if (inp) inp.placeholder = currentMode === 'decide' ? DECIDE_PLACEHOLDER : RECOMMEND_PLACEHOLDER;
+  const modeSwitch = document.getElementById('modeSwitch');
+  if (modeSwitch) {
+    modeSwitch.querySelectorAll('.mode-switch-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.mode === currentMode);
+    });
+  }
+}
+
+function setAppMode(mode) {
+  if (mode !== 'recommend' && mode !== 'decide') return;
+  if (mode === 'decide') {
+    openDecideStarter();
+    return;
+  }
+  const shouldRender = currentMode !== 'recommend' || decideStarterActive;
+  currentMode = 'recommend';
+  decideStarterActive = false;
+  clearDecideWheelTimer();
+  decideWheelSpinning = false;
+  syncModeUI();
+  if (currentView === 'chat' && shouldRender) renderMessages();
+}
+
+function cancelSessionRename() {
+  sessionRenamingId = null;
+  sessionRenameDraft = '';
+}
+
+function saveSessionRename(id) {
+  const session = sessions.find(s => s.id === id);
+  if (!session) return;
+  const nextTitle = sessionRenameDraft.trim();
+  if (nextTitle) session.title = nextTitle.slice(0, 40);
+  cancelSessionRename();
+  saveSessions();
+  renderSidebar();
+}
+
+function clampSidebarWidth(w) {
+  return Math.max(SIDEBAR_MIN_WIDTH, Math.min(SIDEBAR_MAX_WIDTH, w));
+}
+
+function loadSidebarWidth() {
+  try {
+    const raw = localStorage.getItem(SIDEBAR_WIDTH_KEY);
+    const parsed = raw ? parseInt(raw, 10) : 240;
+    sidebarWidth = clampSidebarWidth(Number.isFinite(parsed) ? parsed : 240);
+  } catch {
+    sidebarWidth = 240;
+  }
+}
+
+function applySidebarWidth() {
+  const sidebar = document.getElementById('sidebar');
+  if (!sidebar) return;
+  if (window.innerWidth < 900) {
+    sidebar.style.width = '';
+    return;
+  }
+  if (sidebar.classList.contains('collapsed')) {
+    sidebar.style.width = '0px';
+    return;
+  }
+  sidebar.style.width = `${clampSidebarWidth(sidebarWidth)}px`;
+}
+
+function saveSidebarWidth() {
+  try { localStorage.setItem(SIDEBAR_WIDTH_KEY, String(clampSidebarWidth(sidebarWidth))); } catch {}
+}
+
+function initSidebarResize() {
+  const resizer = document.getElementById('sidebarResizer');
+  const sidebar = document.getElementById('sidebar');
+  if (!resizer || !sidebar) return;
+
+  resizer.addEventListener('mousedown', e => {
+    if (window.innerWidth < 900) return;
+    if (sidebar.classList.contains('collapsed')) return;
+    isSidebarResizing = true;
+    document.body.classList.add('resizing-sidebar');
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!isSidebarResizing) return;
+    sidebarWidth = clampSidebarWidth(e.clientX);
+    applySidebarWidth();
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!isSidebarResizing) return;
+    isSidebarResizing = false;
+    document.body.classList.remove('resizing-sidebar');
+    saveSidebarWidth();
+  });
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth < 900 && isSidebarResizing) {
+      isSidebarResizing = false;
+      document.body.classList.remove('resizing-sidebar');
+    }
+    applySidebarWidth();
+  });
+}
+
 /* ── SESSION MANAGEMENT ── */
 function loadSessions() {
   try {
@@ -1629,6 +2276,9 @@ function getCurrentSession() {
 }
 
 function createNewSession() {
+  cancelSessionRename();
+  decideStarterActive = false;
+  resetDecideStarter();
   const session = {
     id: 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
     title: '新对话',
@@ -1644,6 +2294,9 @@ function createNewSession() {
 
 function switchSession(id) {
   if (id === currentSessionId && currentView === 'chat') return;
+  cancelSessionRename();
+  decideStarterActive = false;
+  resetDecideStarter();
   currentSessionId = id;
   if (currentView !== 'chat') {
     showChatView();
@@ -1659,6 +2312,7 @@ function switchSession(id) {
 }
 
 function deleteSession(id) {
+  if (sessionRenamingId === id) cancelSessionRename();
   const idx = sessions.findIndex(s => s.id === id);
   if (idx === -1) return;
   sessions.splice(idx, 1);
@@ -1682,20 +2336,65 @@ function renderSidebar() {
   [...sessions].reverse().forEach(session => {
     const item = document.createElement('div');
     item.className = 'session-item' + (session.id === currentSessionId ? ' active' : '');
+    const isEditing = sessionRenamingId === session.id;
+    if (isEditing) item.classList.add('editing');
 
-    const titleEl = document.createElement('span');
-    titleEl.className = 'session-title';
-    titleEl.textContent = session.title;
+    if (isEditing) {
+      const input = document.createElement('input');
+      input.className = 'session-rename-input';
+      input.value = sessionRenameDraft || session.title || '';
+      input.maxLength = 40;
 
-    const delBtn = document.createElement('button');
-    delBtn.className = 'session-del';
-    delBtn.textContent = '×';
-    delBtn.title = '删除此对话';
-    delBtn.addEventListener('click', e => { e.stopPropagation(); deleteSession(session.id); });
+      const cancelBtn = document.createElement('button');
+      cancelBtn.className = 'session-rename-cancel';
+      cancelBtn.textContent = '✕';
+      cancelBtn.title = '取消';
+      cancelBtn.addEventListener('click', e => { e.stopPropagation(); cancelSessionRename(); renderSidebar(); });
 
-    item.appendChild(titleEl);
-    item.appendChild(delBtn);
-    item.addEventListener('click', () => switchSession(session.id));
+      const saveBtn = document.createElement('button');
+      saveBtn.className = 'session-rename-save';
+      saveBtn.textContent = '✓';
+      saveBtn.title = '保存';
+      saveBtn.addEventListener('click', e => { e.stopPropagation(); saveSessionRename(session.id); });
+
+      input.addEventListener('input', () => { sessionRenameDraft = input.value; });
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); saveSessionRename(session.id); }
+        if (e.key === 'Escape') { e.preventDefault(); cancelSessionRename(); renderSidebar(); }
+      });
+      input.addEventListener('click', e => e.stopPropagation());
+
+      item.appendChild(input);
+      item.appendChild(cancelBtn);
+      item.appendChild(saveBtn);
+      setTimeout(() => { input.focus(); input.select(); }, 0);
+    } else {
+      const titleEl = document.createElement('span');
+      titleEl.className = 'session-title';
+      titleEl.textContent = session.title;
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'session-edit';
+      editBtn.textContent = '✎';
+      editBtn.title = '重命名对话';
+      editBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        sessionRenamingId = session.id;
+        sessionRenameDraft = session.title || '';
+        renderSidebar();
+      });
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'session-del';
+      delBtn.textContent = '×';
+      delBtn.title = '删除此对话';
+      delBtn.addEventListener('click', e => { e.stopPropagation(); deleteSession(session.id); });
+
+      item.appendChild(titleEl);
+      item.appendChild(editBtn);
+      item.appendChild(delBtn);
+      item.addEventListener('click', () => switchSession(session.id));
+    }
     list.appendChild(item);
   });
   const favEntry = document.getElementById('favEntry');
@@ -1710,6 +2409,7 @@ function toggleSidebar() {
     overlay.classList.toggle('visible');
   } else {
     sidebar.classList.toggle('collapsed');
+    applySidebarWidth();
   }
 }
 
@@ -1718,22 +2418,123 @@ function renderMessages() {
   const c = document.getElementById('chatWrap');
   c.innerHTML = '';
   const session = getCurrentSession();
-  if (!session || session.messages.length === 0) {
+  const shouldShowDecideStarter = currentMode === 'decide' && decideStarterActive;
+  if (!session || session.messages.length === 0 || shouldShowDecideStarter) {
+    if (currentMode === 'decide') ensureWheelOptions();
     const welcome = document.createElement('div');
     welcome.className = 'welcome';
+    const recommendActive = currentMode === 'recommend' ? ' active' : '';
+    const decideActive = currentMode === 'decide' ? ' active' : '';
+    const modeSub = currentMode === 'decide'
+      ? '先决定今天吃什么方向，再进入找店。'
+      : '告诉我城市、预算或场景，我来帮你筛出更合适的餐厅。';
+    const chips = (currentMode === 'decide' ? DECIDE_CHIPS : RECOMMEND_WELCOME_CHIPS)
+      .map(label => `<span class="chip" ${currentMode === 'decide' ? `data-decide="${esc(label)}"` : `data-suggest="${esc(label)}"`}>${esc(label)}</span>`)
+      .join('');
+    const wheelSegments = currentMode === 'decide'
+      ? decideWheelOptions.map((item, i) => {
+          const angle = (360 / decideWheelOptions.length) * i;
+          const active = !decideWheelSpinning && i === decideWheelHighlight ? ' active' : '';
+          return `<div class="decide-wheel-seg${active}" style="--a:${angle}deg;"><span>${esc(item.direction)}</span></div>`;
+        }).join('')
+      : '';
+    const decideWheelHtml = currentMode === 'decide' ? `
+      <div class="decide-wheel-card">
+        <div class="decide-wheel-head">命运签 · 今天吃什么</div>
+        <div class="decide-wheel-sub">点“开始抽签”会转一轮，再揭晓一个方向。</div>
+        <div class="decide-wheel-wrap">
+          <div class="decide-wheel-pointer"></div>
+          <div class="decide-wheel${decideWheelSpinning ? ' spinning' : ''}" style="transform: rotate(${decideWheelRotation}deg);">
+            ${wheelSegments}
+          </div>
+          <div class="decide-wheel-center">食</div>
+        </div>
+        <div class="decide-wheel-controls">
+          <button class="decide-cta-btn" data-decide-action="spin" ${decideWheelSpinning ? 'disabled' : ''}>${decideWheelSpinning ? '抽签中…' : '开始抽签'}</button>
+          <button class="decide-ghost-btn" data-decide-action="refresh-wheel" ${decideWheelSpinning ? 'disabled' : ''}>换一盘选项</button>
+        </div>
+      </div>
+    ` : '';
+    const decideResultHtml = currentMode === 'decide' && decideResult ? `
+      <div class="decide-result-card">
+        <div class="decide-result-eyebrow">今天适合吃</div>
+        <div class="decide-result-title">${esc(decideResult.text)}</div>
+        <div class="decide-result-direction">方向：${esc(decideResult.direction)}</div>
+        <div class="decide-result-sub">${esc(decideResult.note)}</div>
+        <div class="decide-result-actions">
+          <button class="decide-cta-btn" data-decide-action="find">按这个找店</button>
+          <button class="decide-ghost-btn" data-decide-action="reroll">再试一次</button>
+        </div>
+      </div>
+    ` : '';
     welcome.innerHTML = `
       <div class="welcome-eyebrow">美食探店助手</div>
       <h2>你好，欢迎来觅食。</h2>
-      <p>告诉我你在哪个城市、想吃什么，<br>我帮你从 Google 实时找 Top 6 好店。</p>
-      <div class="chips">
-        <span class="chip" data-suggest="上海外滩高档餐厅">上海外滩高档餐厅</span>
-        <span class="chip" data-suggest="北京三里屯咖啡厅">北京三里屯咖啡厅</span>
-        <span class="chip" data-suggest="成都平价川菜">成都平价川菜</span>
-        <span class="chip" data-suggest="Berlin brunch spots">Berlin brunch</span>
+      <div class="home-entry-grid">
+        <div class="home-entry-card${recommendActive}" data-mode-card="recommend">
+          <div class="home-entry-title">推荐餐厅</div>
+          <div class="home-entry-sub">输入偏好，给你一份当下更好选的餐厅方向。</div>
+        </div>
+        <div class="home-entry-card${decideActive}" data-mode-card="decide">
+          <div class="home-entry-title">今天吃什么</div>
+          <div class="home-entry-sub">不想想太多，选个状态让我帮你决定。</div>
+        </div>
       </div>
+      <p class="welcome-mode-sub">${modeSub}</p>
+      ${decideWheelHtml}
+      ${decideResultHtml}
+      <div class="chips">${chips}</div>
     `;
+    welcome.querySelectorAll('[data-mode-card]').forEach(card => {
+      card.addEventListener('click', () => setAppMode(card.dataset.modeCard));
+    });
     welcome.querySelectorAll('.chip').forEach(chip => {
-      chip.addEventListener('click', () => suggest(chip.dataset.suggest));
+      if (chip.dataset.decide) {
+        chip.addEventListener('click', () => {
+          if (chip.dataset.decide === '完全随机') {
+            runDecideWheel(welcome);
+          } else {
+            chooseDecideChip(chip.dataset.decide);
+          }
+        });
+      } else {
+        chip.addEventListener('click', () => suggest(chip.dataset.suggest));
+      }
+    });
+    welcome.querySelectorAll('[data-decide-action]').forEach(btn => {
+      if (btn.dataset.decideAction === 'spin') {
+        btn.addEventListener('click', () => runDecideWheel(welcome));
+      }
+      if (btn.dataset.decideAction === 'refresh-wheel') {
+        btn.addEventListener('click', () => {
+          decideWheelOptions = createWheelOptions();
+          decideWheelHighlight = -1;
+          decideWheelRotation = 0;
+          renderMessages();
+        });
+      }
+      if (btn.dataset.decideAction === 'find') {
+        btn.addEventListener('click', () => {
+          if (!decideResult) return;
+          if (btn.dataset.locked === '1') return;
+          btn.dataset.locked = '1';
+          btn.disabled = true;
+          const nextPrompt = buildFindByCuisinePrompt(decideResult);
+          decideStarterActive = false;
+          decideResult = null;
+          setAppMode('recommend');
+          suggest(nextPrompt);
+        });
+      }
+      if (btn.dataset.decideAction === 'reroll') {
+        btn.addEventListener('click', () => {
+          if (decideResult && decideResult.source && decideResult.source !== '完全随机') {
+            chooseDecideChip(decideResult.source);
+          } else {
+            runDecideWheel(welcome);
+          }
+        });
+      }
     });
     c.appendChild(welcome);
     return;
@@ -1767,15 +2568,15 @@ function appendBotBubbles(text) {
   const wrap = document.createElement('div');
   wrap.className = 'bot-wrap';
 
-  others.forEach(t => {
-    t = t.trim(); if (!t) return;
-    const p = document.createElement('div');
-    p.className = 'plain-bubble';
-    p.innerHTML = t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
-    wrap.appendChild(p);
-  });
-
   if (restaurants.length > 0) {
+    others.forEach(t => {
+      t = t.trim(); if (!t) return;
+      const p = document.createElement('div');
+      p.className = 'plain-bubble';
+      p.innerHTML = t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+      wrap.appendChild(p);
+    });
+
     const group = document.createElement('div');
     group.className = 'restaurant-group';
 
@@ -1827,9 +2628,10 @@ function appendBotBubbles(text) {
     }
     wrap.appendChild(group);
   } else {
+    const merged = (others.length ? others.join('\n\n') : text).trim();
     const p = document.createElement('div');
     p.className = 'plain-bubble';
-    p.innerHTML = text.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    p.innerHTML = merged.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
     wrap.appendChild(p);
   }
 
@@ -2062,12 +2864,15 @@ function showChatView() {
   document.getElementById('chatWrap').style.display = '';
   document.getElementById('inputBar').style.display = '';
   document.getElementById('favView').classList.remove('active');
+  syncModeUI();
   renderMessages();
   renderSidebar();
 }
 
 function showFavView() {
   currentView = 'favorites';
+  clearDecideWheelTimer();
+  decideWheelSpinning = false;
   favExpandedCollection = null;
   favPendingDeleteCollection = null;
   favRenamingCollection = null;
@@ -2285,6 +3090,9 @@ async function send() {
   const inp = document.getElementById('inp');
   const text = inp.value.trim();
   if (!text) return;
+  decideStarterActive = false;
+  clearDecideWheelTimer();
+  decideWheelSpinning = false;
   inp.value = ''; inp.style.height = 'auto';
 
   busy = true;
@@ -2380,6 +3188,9 @@ async function resendRequest(lastUserText) {
 
 /* ── INIT ── */
 function init() {
+  loadSidebarWidth();
+  applySidebarWidth();
+  initSidebarResize();
   loadSessions();
   if (sessions.length === 0) {
     createNewSession();
@@ -2393,6 +3204,10 @@ function init() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
   });
   document.getElementById('inp').addEventListener('input', function() { resize(this); });
+  document.getElementById('modeSwitch').querySelectorAll('.mode-switch-btn').forEach(btn => {
+    btn.addEventListener('click', () => setAppMode(btn.dataset.mode));
+  });
+  syncModeUI();
   document.getElementById('btn').addEventListener('click', send);
   document.getElementById('newChatBtn').addEventListener('click', createNewSession);
   document.getElementById('hamburgerBtn').addEventListener('click', toggleSidebar);
