@@ -792,6 +792,28 @@
     max-width: calc(100vw - 40px);
     box-shadow: 0 8px 36px rgba(0,0,0,0.14);
     animation: fadeUp 0.2s ease;
+    position: relative;
+  }
+  .fav-panel-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: none;
+    border-radius: 6px;
+    color: var(--color-text-secondary);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.45;
+    transition: opacity 0.15s, color 0.15s, background 0.15s;
+  }
+  .fav-panel-close:hover {
+    opacity: 1;
+    color: var(--color-accent);
+    background: var(--color-bg);
   }
 
   .fav-panel-title {
@@ -972,8 +994,11 @@
     align-items: center;
     gap: 8px;
     padding: 14px 18px;
-    border-bottom: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: background 0.12s;
   }
+  .fav-coll-header:hover { background: var(--color-bg); }
+  .fav-coll-section.expanded .fav-coll-header { border-bottom: 1px solid var(--color-border); }
   .fav-coll-name {
     font-family: 'Playfair Display', serif;
     font-size: 16px;
@@ -1002,6 +1027,112 @@
     opacity: 0.35;
   }
   .fav-coll-del-btn:hover { color: var(--color-accent); opacity: 1; }
+  .fav-coll-edit-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.15s, opacity 0.15s;
+    opacity: 0.4;
+  }
+  .fav-coll-edit-btn:hover { color: var(--color-accent); opacity: 1; }
+  .fav-coll-toggle {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    opacity: 0.75;
+    transition: transform 0.15s ease;
+    line-height: 1;
+  }
+  .fav-coll-section.expanded .fav-coll-toggle { transform: rotate(180deg); }
+
+  .fav-coll-delete-confirm {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 18px;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-bg);
+  }
+  .fav-coll-delete-text {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+  }
+  .fav-coll-delete-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .fav-coll-confirm-btn,
+  .fav-coll-cancel-btn {
+    border-radius: 999px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 8px 12px;
+    transition: opacity 0.15s, background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .fav-coll-confirm-btn {
+    border: 1px solid #E9BCA0;
+    background: #FFF3EE;
+    color: var(--color-accent);
+  }
+  .fav-coll-confirm-btn:hover { opacity: 0.85; }
+  .fav-coll-cancel-btn {
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+    color: var(--color-text-secondary);
+  }
+  .fav-coll-cancel-btn:hover { background: var(--color-bg); }
+  .fav-coll-rename-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 18px;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-bg);
+  }
+  .fav-coll-rename-input {
+    flex: 1;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-card);
+    color: var(--color-text-main);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 8px 12px;
+    outline: none;
+    min-width: 0;
+  }
+  .fav-coll-rename-input:focus { border-color: var(--color-accent); }
+  .fav-coll-rename-save,
+  .fav-coll-rename-cancel {
+    border-radius: 999px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 8px 12px;
+    transition: opacity 0.15s, background 0.15s;
+  }
+  .fav-coll-rename-save {
+    border: 1px solid #E9BCA0;
+    background: #FFF3EE;
+    color: var(--color-accent);
+  }
+  .fav-coll-rename-save:hover { opacity: 0.85; }
+  .fav-coll-rename-cancel {
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+    color: var(--color-text-secondary);
+  }
+  .fav-coll-rename-cancel:hover { background: var(--color-bg); }
 
   .fav-rest-row {
     display: flex;
@@ -1065,6 +1196,30 @@
     margin-bottom: 8px;
   }
   .fav-empty-sub { font-size: 13px; color: var(--color-text-secondary); opacity: 0.65; line-height: 1.7; }
+  .fav-hint {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%);
+    max-width: calc(100vw - 36px);
+    background: rgba(122, 104, 88, 0.86);
+    color: #FFF7F1;
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 999px;
+    padding: 9px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s;
+    z-index: 260;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .fav-hint.show { opacity: 1; }
 
   /* ── RESTAURANT GROUP (share button row) ── */
   .restaurant-group {
@@ -1282,6 +1437,25 @@
   }
   @media (max-width: 480px) {
     .cards-more-btn { display: block; }
+    .fav-coll-delete-confirm {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .fav-coll-delete-actions { width: 100%; }
+    .fav-coll-confirm-btn,
+    .fav-coll-cancel-btn {
+      flex: 1;
+      text-align: center;
+    }
+    .fav-coll-rename-row { flex-wrap: wrap; }
+    .fav-coll-rename-input { width: 100%; }
+    .fav-coll-rename-save,
+    .fav-coll-rename-cancel { flex: 1; text-align: center; }
+    .fav-hint {
+      bottom: 20px;
+      max-width: calc(100vw - 24px);
+      padding: 9px 14px;
+    }
   }
 </style>
 </head>
@@ -1334,6 +1508,7 @@
 
 <div class="fav-overlay" id="favOverlay">
   <div class="fav-panel" id="favPanel">
+    <button class="fav-panel-close" id="favPanelClose" aria-label="关闭收藏弹层">×</button>
     <div class="fav-panel-title">保存到合集</div>
     <div class="fav-panel-sub" id="favPanelSub"></div>
     <div class="fav-collections-list" id="favCollsList"></div>
@@ -1367,6 +1542,10 @@ let currentView = 'chat'; // 'chat' | 'favorites'
 
 const FAVS_KEY = 'misshiguan_favorites_v2';
 let _favPopoverRestaurant = null;
+let favExpandedCollection = null;
+let favPendingDeleteCollection = null;
+let favRenamingCollection = null;
+let favRenameDraft = '';
 
 /* ── FAVORITES HELPERS ── */
 function loadFavs() {
@@ -1402,10 +1581,12 @@ function addToNewCollection(collName, restaurant) {
   collName = collName.trim(); if (!collName) return false;
   const f = loadFavs(), k = favKey(restaurant.name, restaurant.address);
   if (!f[collName]) f[collName] = [];
+  let added = false;
   if (!f[collName].some(r => favKey(r.name, r.address) === k)) {
     f[collName].push({ name: restaurant.name, rating: restaurant.rating, address: restaurant.address, mapUrl: restaurant.mapUrl, savedAt: Date.now() });
+    added = true;
   }
-  saveFavs(f); return true;
+  saveFavs(f); return added;
 }
 
 /* ── UTILS ── */
@@ -1785,6 +1966,7 @@ function renderFavPopover() {
       const nowChecked = item.classList.contains('checked');
       setRestaurantInCollection(r, coll, !nowChecked);
       renderFavPopover();
+      if (!nowChecked) showFavHint(`已收藏到「${coll}」`);
     });
     listEl.appendChild(item);
   });
@@ -1798,6 +1980,7 @@ function initFavPopover() {
   document.getElementById('favNewInput').addEventListener('keydown', e => {
     if (e.key === 'Enter') doAddNewCollection();
   });
+  document.getElementById('favPanelClose').addEventListener('click', closeFavPopover);
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && document.getElementById('favOverlay').classList.contains('open')) closeFavPopover();
   });
@@ -1810,9 +1993,11 @@ function doAddNewCollection() {
   const inp = document.getElementById('favNewInput');
   const name = inp.value.trim();
   if (!name || !_favPopoverRestaurant) return;
-  addToNewCollection(name, _favPopoverRestaurant);
+  const added = addToNewCollection(name, _favPopoverRestaurant);
   inp.value = '';
   renderFavPopover();
+  if (added) showFavHint(`已收藏到「${name}」`);
+  else showFavHint(`「${name}」里已存在这家店`);
 }
 
 function refreshAllCardFavStates() {
@@ -1822,6 +2007,53 @@ function refreshAllCardFavStates() {
     btn.textContent = saved ? '♥' : '♡';
     btn.title = saved ? '已收藏' : '收藏';
   });
+}
+
+function showFavHint(msg) {
+  let hint = document.getElementById('favHint');
+  if (!hint) {
+    hint = document.createElement('div');
+    hint.id = 'favHint';
+    hint.className = 'fav-hint';
+    document.body.appendChild(hint);
+  }
+  hint.textContent = msg;
+  hint.classList.add('show');
+  clearTimeout(hint._timer);
+  hint._timer = setTimeout(() => { hint.classList.remove('show'); }, 1800);
+}
+
+function cancelCollectionRename() {
+  favRenamingCollection = null;
+  favRenameDraft = '';
+  renderFavView();
+}
+
+function submitCollectionRename(collName) {
+  const oldName = collName;
+  const newName = favRenameDraft.trim();
+  if (!newName) {
+    showFavHint('合集名不能为空');
+    return;
+  }
+  if (newName === oldName) {
+    cancelCollectionRename();
+    return;
+  }
+  const f = loadFavs();
+  if (Object.prototype.hasOwnProperty.call(f, newName)) {
+    showFavHint('已有同名合集');
+    return;
+  }
+  f[newName] = f[oldName] || [];
+  delete f[oldName];
+  saveFavs(f);
+  if (favExpandedCollection === oldName) favExpandedCollection = newName;
+  if (favPendingDeleteCollection === oldName) favPendingDeleteCollection = null;
+  favRenamingCollection = null;
+  favRenameDraft = '';
+  renderFavView();
+  showFavHint(`合集已改名为「${newName}」`);
 }
 
 /* ── VIEW SWITCHING ── */
@@ -1836,6 +2068,10 @@ function showChatView() {
 
 function showFavView() {
   currentView = 'favorites';
+  favExpandedCollection = null;
+  favPendingDeleteCollection = null;
+  favRenamingCollection = null;
+  favRenameDraft = '';
   document.getElementById('chatWrap').style.display = 'none';
   document.getElementById('inputBar').style.display = 'none';
   document.getElementById('favView').classList.add('active');
@@ -1847,6 +2083,12 @@ function renderFavView() {
   const el = document.getElementById('favView');
   const f = loadFavs();
   const colls = Object.keys(f).filter(c => f[c].length > 0);
+  if (favExpandedCollection && !colls.includes(favExpandedCollection)) favExpandedCollection = null;
+  if (favPendingDeleteCollection && !colls.includes(favPendingDeleteCollection)) favPendingDeleteCollection = null;
+  if (favRenamingCollection && !colls.includes(favRenamingCollection)) {
+    favRenamingCollection = null;
+    favRenameDraft = '';
+  }
   el.innerHTML = `<div class="fav-view-title">我的收藏</div><div class="fav-view-sub">你收藏的好店，按合集整理</div>`;
   if (colls.length === 0) {
     const empty = document.createElement('div');
@@ -1859,33 +2101,122 @@ function renderFavView() {
     const list = f[collName];
     const section = document.createElement('div');
     section.className = 'fav-coll-section';
+    const isExpanded = favExpandedCollection === collName;
+    const isPendingDelete = favPendingDeleteCollection === collName;
+    const isRenaming = favRenamingCollection === collName;
+    if (isExpanded) section.classList.add('expanded');
+
     const header = document.createElement('div');
     header.className = 'fav-coll-header';
-    header.innerHTML = `<div class="fav-coll-name">${esc(collName)}</div><span class="fav-coll-badge">${list.length} 家</span><button class="fav-coll-del-btn" title="删除整个合集">×</button>`;
-    header.querySelector('.fav-coll-del-btn').addEventListener('click', () => {
-      const f2 = loadFavs(); delete f2[collName]; saveFavs(f2);
-      renderFavView(); refreshAllCardFavStates();
+    header.innerHTML = `
+      <div class="fav-coll-name">${esc(collName)}</div>
+      <span class="fav-coll-badge">${list.length} 家</span>
+      <button class="fav-coll-edit-btn" title="重命名合集">✎</button>
+      <button class="fav-coll-del-btn" title="删除整个合集">×</button>
+      <span class="fav-coll-toggle">▾</span>
+    `;
+    header.addEventListener('click', () => {
+      favExpandedCollection = favExpandedCollection === collName ? null : collName;
+      favPendingDeleteCollection = null;
+      favRenamingCollection = null;
+      favRenameDraft = '';
+      renderFavView();
     });
-    const restList = document.createElement('div');
-    list.forEach(r => {
-      const row = document.createElement('div');
-      row.className = 'fav-rest-row';
-      row.innerHTML = `
-        <div class="fav-rest-info">
-          <div class="fav-rest-name">${esc(r.name)}</div>
-          <div class="fav-rest-meta">${r.rating ? '⭐ ' + esc(r.rating) + ' 分' : ''}${r.rating && r.address ? '  ·  ' : ''}${r.address ? '📍 ' + esc(r.address) : ''}</div>
-          ${r.mapUrl ? `<a class="fav-rest-link" href="${r.mapUrl}" target="_blank">查看地图 →</a>` : ''}
-        </div>
-        <button class="fav-rest-del" title="从此合集移除">×</button>
-      `;
-      row.querySelector('.fav-rest-del').addEventListener('click', () => {
-        setRestaurantInCollection(r, collName, false);
-        renderFavView(); refreshAllCardFavStates();
-      });
-      restList.appendChild(row);
+    header.querySelector('.fav-coll-edit-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      favRenamingCollection = collName;
+      favRenameDraft = collName;
+      favPendingDeleteCollection = null;
+      renderFavView();
+    });
+    header.querySelector('.fav-coll-del-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      favPendingDeleteCollection = collName;
+      favRenamingCollection = null;
+      favRenameDraft = '';
+      renderFavView();
     });
     section.appendChild(header);
-    section.appendChild(restList);
+
+    if (isRenaming) {
+      const renameRow = document.createElement('div');
+      renameRow.className = 'fav-coll-rename-row';
+      renameRow.innerHTML = `
+        <input class="fav-coll-rename-input" maxlength="30" />
+        <button class="fav-coll-rename-cancel">取消</button>
+        <button class="fav-coll-rename-save">保存</button>
+      `;
+      const renameInput = renameRow.querySelector('.fav-coll-rename-input');
+      renameInput.value = favRenameDraft || collName;
+      renameInput.addEventListener('input', () => { favRenameDraft = renameInput.value; });
+      renameInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') submitCollectionRename(collName);
+        if (e.key === 'Escape') cancelCollectionRename();
+      });
+      renameRow.querySelector('.fav-coll-rename-cancel').addEventListener('click', e => {
+        e.stopPropagation();
+        cancelCollectionRename();
+      });
+      renameRow.querySelector('.fav-coll-rename-save').addEventListener('click', e => {
+        e.stopPropagation();
+        submitCollectionRename(collName);
+      });
+      section.appendChild(renameRow);
+      setTimeout(() => {
+        renameInput.focus();
+        renameInput.select();
+      }, 0);
+    }
+
+    if (isExpanded) {
+      const restList = document.createElement('div');
+      list.forEach(r => {
+        const row = document.createElement('div');
+        row.className = 'fav-rest-row';
+        row.innerHTML = `
+          <div class="fav-rest-info">
+            <div class="fav-rest-name">${esc(r.name)}</div>
+            <div class="fav-rest-meta">${r.rating ? '⭐ ' + esc(r.rating) + ' 分' : ''}${r.rating && r.address ? '  ·  ' : ''}${r.address ? '📍 ' + esc(r.address) : ''}</div>
+            ${r.mapUrl ? `<a class="fav-rest-link" href="${r.mapUrl}" target="_blank">查看地图 →</a>` : ''}
+          </div>
+          <button class="fav-rest-del" title="从此合集移除">×</button>
+        `;
+        row.querySelector('.fav-rest-del').addEventListener('click', () => {
+          setRestaurantInCollection(r, collName, false);
+          renderFavView(); refreshAllCardFavStates();
+        });
+        restList.appendChild(row);
+      });
+      section.appendChild(restList);
+    }
+
+    if (isPendingDelete) {
+      const confirm = document.createElement('div');
+      confirm.className = 'fav-coll-delete-confirm';
+      confirm.innerHTML = `
+        <div class="fav-coll-delete-text">确认删除合集「${esc(collName)}」吗？</div>
+        <div class="fav-coll-delete-actions">
+          <button class="fav-coll-cancel-btn">取消</button>
+          <button class="fav-coll-confirm-btn">确认删除</button>
+        </div>
+      `;
+      confirm.querySelector('.fav-coll-cancel-btn').addEventListener('click', e => {
+        e.stopPropagation();
+        favPendingDeleteCollection = null;
+        renderFavView();
+      });
+      confirm.querySelector('.fav-coll-confirm-btn').addEventListener('click', e => {
+        e.stopPropagation();
+        const f2 = loadFavs();
+        delete f2[collName];
+        saveFavs(f2);
+        if (favExpandedCollection === collName) favExpandedCollection = null;
+        favPendingDeleteCollection = null;
+        renderFavView();
+        refreshAllCardFavStates();
+      });
+      section.appendChild(confirm);
+    }
     el.appendChild(section);
   });
 }
