@@ -1947,6 +1947,8 @@ let decideWheelRotation = 0;
 let decideWheelHighlight = -1;
 let decideWheelSpinning = false;
 let decideWheelTimer = null;
+let pendingApiPromptOverride = null;
+let pendingApiTask = null;
 let geoStatus = 'idle'; // 'idle' | 'requesting' | 'ready' | 'denied' | 'error'
 let geoData = null; // { lat, lng, accuracy, city, region, label }
 let geoError = '';
@@ -2084,7 +2086,7 @@ function buildRecommendInputWithGeo(text) {
   if (geoStatus !== 'ready' || !geoData) return text;
   if (textLooksLikeHasLocation(text)) return text;
   const label = guessGeoLabel(geoData) || '我的当前位置';
-  return `${text}\n\n补充定位参考：我当前在${label}，请优先推荐这个位置附近可步行或短途可达的餐厅。若我手动补充了其他地点，请以我手动输入为准。`;
+  return `${text}\n\n补充定位参考：我当前在${label}。请优先推荐附近可步行或短途可达的餐厅，不要跨城市或跨国家推荐。若附近该细分菜系选择不多，请先在附近范围内联想放宽到相近菜系（例如细分中餐→中餐→亚洲菜），并用一句自然话说明已做就近放宽。若我手动补充了其他地点，请以我手动输入为准。`;
 }
 
 function refreshRecommendWelcomeIfNeeded() {
@@ -2130,7 +2132,9 @@ async function reverseGeocode(lat, lng) {
     const addr = data && data.address ? data.address : {};
     const city = addr.city || addr.town || addr.county || addr.state || '';
     const region = addr.suburb || addr.borough || addr.city_district || addr.state_district || '';
-    return { city: city || '', region: region || '' };
+    const country = addr.country || '';
+    const countryCode = addr.country_code || '';
+    return { city: city || '', region: region || '', country: country || '', countryCode: countryCode || '' };
   } finally {
     clearTimeout(timer);
   }
@@ -2178,6 +2182,8 @@ function requestGeolocation(options = {}) {
       accuracy: pos.coords.accuracy,
       city: '',
       region: '',
+      country: '',
+      countryCode: '',
       label: '你的当前位置'
     };
     updateGeoHintUI();
@@ -2189,6 +2195,8 @@ function requestGeolocation(options = {}) {
       if (geoStatus !== 'ready' || !geoData) return;
       geoData.city = named.city || '';
       geoData.region = named.region || '';
+      geoData.country = named.country || '';
+      geoData.countryCode = named.countryCode || '';
       geoData.label = guessGeoLabel(geoData);
       updateGeoHintUI();
       refreshRecommendWelcomeIfNeeded();
@@ -2291,13 +2299,157 @@ function buildDecideResult(label, fixedEntry) {
   };
 }
 
+function buildCuisineFallbackHint(direction) {
+  const d = String(direction || '').trim();
+  if (!d) return '';
+  const chainMap = [
+    { keys: ['西北菜'], chain: '西北菜 -> 中餐 -> 亚洲菜' },
+    { keys: ['潮汕菜'], chain: '潮汕菜 -> 粤菜 -> 中餐' },
+    { keys: ['韩餐', '韩国'], chain: '韩餐 -> 亚洲菜' },
+    { keys: ['川菜', '湘菜', '云贵', '云南菜', '贵州菜', '东北菜', '江浙菜', '粤菜', '客家菜', '新疆菜', '中餐'], chain: `${d} -> 中餐 -> 亚洲菜` },
+    { keys: ['日料', '日式'], chain: '日料 -> 亚洲菜' },
+    { keys: ['东南亚', '南亚', '泰餐', '越南', '印度'], chain: `${d} -> 亚洲菜` },
+    { keys: ['法餐', '意餐', '地中海'], chain: `${d} -> 西式餐饮` }
+  ];
+  const matched = chainMap.find(item => item.keys.some(k => d.includes(k)));
+  return matched ? matched.chain : `${d} -> 相近风味 -> 更宽泛品类`;
+}
+
+function buildCuisineFallbackChain(direction) {
+  const d = String(direction || '').trim();
+  if (!d) return [];
+  if (d.includes('新疆菜')) return ['新疆菜', '中餐', '亚洲菜'];
+  if (d.includes('西北菜')) return ['西北菜', '中餐', '亚洲菜'];
+  if (d.includes('潮汕菜')) return ['潮汕菜', '粤菜', '中餐'];
+  if (d.includes('韩餐') || d.includes('韩国')) return ['韩餐', '亚洲菜'];
+  if (d.includes('南亚') || d.includes('印度')) return ['南亚菜', '亚洲菜'];
+  if (d.includes('东南亚') || d.includes('泰') || d.includes('越南')) return ['东南亚菜', '亚洲菜'];
+  if (d.includes('日料') || d.includes('日式')) return ['日料', '亚洲菜'];
+  if (d.includes('中餐') || d.includes('川菜') || d.includes('湘菜') || d.includes('粤菜') || d.includes('江浙') || d.includes('东北菜') || d.includes('云南菜') || d.includes('贵州菜') || d.includes('客家菜')) {
+    return [d, '中餐', '亚洲菜'];
+  }
+  return [d, '相近口味', '亚洲菜'];
+}
+
+function cloneGeoSnapshot() {
+  if (!geoData) return null;
+  return {
+    city: geoData.city || '',
+    region: geoData.region || '',
+    country: geoData.country || '',
+    countryCode: geoData.countryCode || '',
+    label: guessGeoLabel(geoData) || '你的当前位置'
+  };
+}
+
+function normalizeTxt(s) {
+  return String(s || '').toLowerCase();
+}
+
+function includesLocalToken(hay, token) {
+  if (!token) return false;
+  const h = normalizeTxt(hay);
+  const t = normalizeTxt(token);
+  return !!t && h.includes(t);
+}
+
+function isRestaurantWithinGeoLock(rest, geoSnapshot) {
+  if (!rest || !geoSnapshot) return false;
+  const raw = `${rest.address || ''} ${rest.mapUrl || ''}`.trim();
+  if (!raw) return false;
+  const hasCity = includesLocalToken(raw, geoSnapshot.city);
+  const hasRegion = includesLocalToken(raw, geoSnapshot.region);
+  if (!hasCity && !hasRegion) return false;
+  const lower = normalizeTxt(raw);
+  if (geoSnapshot.countryCode && geoSnapshot.countryCode !== 'us') {
+    if (/(usa|united states|u\.s\.|u\.s\.a\.|america)/i.test(lower)) return false;
+  }
+  if (geoSnapshot.country && !includesLocalToken(raw, geoSnapshot.country)) {
+    const countryMentions = ['germany', 'deutschland', 'china', '中国', 'japan', 'japan', 'france', 'uk', 'united kingdom', 'usa', 'united states'];
+    const mentioned = countryMentions.find(c => lower.includes(c));
+    if (mentioned) return false;
+  }
+  return true;
+}
+
+function formatRestaurantsAsText(restaurants, leadText) {
+  const intro = leadText ? `${leadText}\n\n` : '';
+  const blocks = restaurants.map(r => {
+    const lines = [`🍽️ **${r.name || '推荐餐厅'}**`];
+    if (r.rating) lines.push(`⭐ ${r.rating}`);
+    if (r.address) lines.push(`📍 ${r.address}`);
+    if (r.hours) lines.push(`🕐 ${r.hours}`);
+    if (r.quote) lines.push(`💬 ${r.quote}`);
+    if (r.mapUrl) lines.push(`[查看 Google Maps](${r.mapUrl})`);
+    return lines.join('\n');
+  });
+  return `${intro}${blocks.join('\n\n')}`.trim();
+}
+
+function buildFriendlyCuisineShiftLine(fromCuisine, toCuisine) {
+  if (!fromCuisine || !toCuisine || fromCuisine === toCuisine) return '';
+  if (toCuisine === '中餐') return `你附近正宗${fromCuisine}不太多，我先帮你找些更接近这个口味的中餐～`;
+  if (toCuisine === '亚洲菜') return `这一带${fromCuisine}选择比较少，我先换个更接近的亚洲口味帮你找找看。`;
+  return `这附近${fromCuisine}选择有点少，我先帮你找些更接近这个口味的${toCuisine}～`;
+}
+
+function extractCuisineFromText(text) {
+  const raw = String(text || '');
+  const keys = ['新疆菜', '西北菜', '潮汕菜', '韩餐', '南亚菜', '东南亚菜', '日料', '中餐', '川菜', '湘菜', '粤菜', '江浙菜'];
+  return keys.find(k => raw.includes(k)) || '';
+}
+
+function buildStrictLocalCuisinePrompt(stepCuisine, rootCuisine, geoSnapshot) {
+  const geoLabel = geoSnapshot && geoSnapshot.label ? geoSnapshot.label : '我的当前位置';
+  return `请为我推荐${geoLabel}附近可到达的${stepCuisine}餐厅（原始偏好：${rootCuisine}）。
+要求：
+1) 仅限同城且短途可达，不得跨城市，不得跨国家；
+2) 如果不满足“本地可到达”，宁可少给，也不要给远距离结果；
+3) 输出格式保持餐厅卡片可解析（🍽️/⭐/📍/Google Maps）。`;
+}
+
+async function runStrictLocalCuisineSearch(task, sessionSid) {
+  const geoSnapshot = task && task.geoSnapshot ? task.geoSnapshot : cloneGeoSnapshot();
+  const rootCuisine = task && task.direction ? task.direction : '';
+  if (!geoSnapshot || !rootCuisine) return null;
+  const chain = buildCuisineFallbackChain(rootCuisine);
+  let lastLocalRestaurants = [];
+  let lastStepCuisine = '';
+  for (let i = 0; i < chain.length; i++) {
+    const stepCuisine = chain[i];
+    const prompt = buildStrictLocalCuisinePrompt(stepCuisine, rootCuisine, geoSnapshot);
+    const output = await callAPI(prompt, sessionSid);
+    const parsed = parseRestaurants(output);
+    const localRestaurants = parsed.restaurants.filter(r => isRestaurantWithinGeoLock(r, geoSnapshot));
+    if (localRestaurants.length > 0) {
+      const lead = i > 0 ? buildFriendlyCuisineShiftLine(rootCuisine, stepCuisine) : '';
+      return formatRestaurantsAsText(localRestaurants, lead);
+    }
+    lastLocalRestaurants = localRestaurants;
+    lastStepCuisine = stepCuisine;
+  }
+  if (lastLocalRestaurants.length > 0) {
+    return formatRestaurantsAsText(lastLocalRestaurants, buildFriendlyCuisineShiftLine(rootCuisine, lastStepCuisine));
+  }
+  return `我在你附近认真找过啦，这一带这个口味确实比较少。要不你换一个附近区域，我继续帮你找找？`;
+}
+
 function buildFindByCuisinePrompt(result) {
   const direction = result && result.direction ? result.direction : '今天状态合适的方向';
   const geoLabel = geoStatus === 'ready' && geoData ? guessGeoLabel(geoData) : '';
   if (geoLabel) {
-    return `请按「${direction}」这个方向，推荐我当前位置（${geoLabel}）附近可到达的餐厅。`;
+    const fallbackHint = buildCuisineFallbackHint(direction);
+    return `请按「${direction}」这个方向，推荐我当前位置（${geoLabel}）附近可到达的餐厅。
+【硬性约束】只允许同城且短途可达（步行/公共交通/打车约30分钟内），严禁跨城市或跨国家推荐。
+【降级策略】若附近${direction}选择不多，只能在本地范围内按这个链路放宽：${fallbackHint}；可以放宽菜系，不可以放宽距离。
+【输出要求】若触发放宽，用一句自然中文简短说明“附近该细分选择不多，已帮你放宽到更接近方向”，再给附近候选。`;
   }
   return `请按「${direction}」这个方向推荐餐厅。`;
+}
+
+function buildFindByCuisineUserPrompt(result) {
+  const direction = result && result.direction ? result.direction : '这类';
+  return `帮我找附近可到达的${direction}餐厅～`;
 }
 
 function prefillManualCityPromptByDecide(result) {
@@ -2667,9 +2819,9 @@ function renderMessages() {
     const decideGeoLabel = geoStatus === 'ready' && geoData ? guessGeoLabel(geoData) : '';
     const hasDecideGeo = !!decideGeoLabel;
     const decideFindLabel = hasDecideGeo && decideResult ? `按当前位置找${decideResult.direction}` : (decideResult ? `📍 使用当前位置找${decideResult.direction}` : '📍 使用当前位置找这类餐厅');
-    const decideManualLabel = decideResult ? '输入其他城市' : '输入城市';
+    const decideManualLabel = hasDecideGeo ? '改用其他城市' : (decideResult ? '输入其他城市' : '输入城市');
     const decideFlowHint = hasDecideGeo
-      ? `已获取位置：${decideGeoLabel}，点击即可直接按当前位置继续推荐。`
+      ? `已获取默认位置：${decideGeoLabel}，你也可以随时改用其他城市。`
       : (geoStatus === 'requesting'
           ? '正在获取位置授权，通过后可直接按当前位置找店。'
           : '还没有位置信息。可先用当前位置找店，或手动输入其他城市。');
@@ -2681,7 +2833,7 @@ function renderMessages() {
         <div class="decide-result-sub">${esc(decideResult.note)} ${esc(decideFlowHint)}</div>
         <div class="decide-result-actions">
           <button class="decide-cta-btn" data-decide-action="find">${esc(decideFindLabel)}</button>
-          ${hasDecideGeo ? '' : `<button class="decide-ghost-btn" data-decide-action="manual-city">${esc(decideManualLabel)}</button>`}
+          <button class="decide-ghost-btn" data-decide-action="manual-city">${esc(decideManualLabel)}</button>
           <button class="decide-ghost-btn" data-decide-action="reroll">再试一次</button>
         </div>
       </div>
@@ -2742,11 +2894,12 @@ function renderMessages() {
             if (btn.dataset.locked === '1') return;
             btn.dataset.locked = '1';
             btn.disabled = true;
-            const nextPrompt = buildFindByCuisinePrompt(decideResult);
+            const userPrompt = buildFindByCuisineUserPrompt(decideResult);
+            const nextTask = { type: 'strictLocalCuisine', direction: decideResult.direction, geoSnapshot: cloneGeoSnapshot() };
             decideStarterActive = false;
             decideResult = null;
             setAppMode('recommend');
-            suggest(nextPrompt);
+            suggest(userPrompt, nextTask);
             return;
           }
           if (geoStatus === 'requesting') return;
@@ -2756,11 +2909,12 @@ function renderMessages() {
           requestGeolocation({
             onSuccess: () => {
               if (!decideResult) return;
-              const nextPrompt = buildFindByCuisinePrompt(decideResult);
+              const userPrompt = buildFindByCuisineUserPrompt(decideResult);
+              const nextTask = { type: 'strictLocalCuisine', direction: decideResult.direction, geoSnapshot: cloneGeoSnapshot() };
               decideStarterActive = false;
               decideResult = null;
               setAppMode('recommend');
-              suggest(nextPrompt);
+              suggest(userPrompt, nextTask);
             },
             onError: () => {
               btn.dataset.locked = '0';
@@ -2891,7 +3045,7 @@ function appendBotBubbles(text) {
   c.appendChild(row);
 }
 
-function appendErrorBubble(errorType, lastUserText) {
+function appendErrorBubble(errorType, lastUserText, lastApiText, lastApiTask) {
   const c = document.getElementById('chatWrap');
   const row = document.createElement('div');
   row.className = 'msg-row';
@@ -2920,7 +3074,7 @@ function appendErrorBubble(errorType, lastUserText) {
   const retryBtn = document.createElement('button');
   retryBtn.className = 'error-retry';
   retryBtn.textContent = '重新发送';
-  retryBtn.addEventListener('click', () => resendRequest(lastUserText));
+  retryBtn.addEventListener('click', () => resendRequest(lastUserText, lastApiText, lastApiTask));
 
   bubble.appendChild(titleEl);
   bubble.appendChild(subEl);
@@ -3330,7 +3484,9 @@ async function callAPI(text, sessionSid) {
 }
 
 /* ── SEND ── */
-function suggest(t) {
+function suggest(t, apiOverride) {
+  pendingApiPromptOverride = typeof apiOverride === 'string' ? apiOverride : null;
+  pendingApiTask = (apiOverride && typeof apiOverride === 'object') ? apiOverride : null;
   document.getElementById('inp').value = t;
   send();
 }
@@ -3365,8 +3521,24 @@ async function send() {
   showTyping();
 
   let output = null, errorType = null;
+  let apiTask = pendingApiTask;
+  const apiInput = ((pendingApiPromptOverride && pendingApiPromptOverride.trim()) || buildRecommendInputWithGeo(text)).trim();
+  pendingApiPromptOverride = null;
+  pendingApiTask = null;
   try {
-    output = await callAPI(buildRecommendInputWithGeo(text), session.sid);
+    if (apiTask && apiTask.type === 'strictLocalCuisine') {
+      output = await runStrictLocalCuisineSearch(apiTask, session.sid);
+    } else if (currentMode === 'recommend' && geoStatus === 'ready' && geoData && !textLooksLikeHasLocation(text)) {
+      const autoCuisine = extractCuisineFromText(text);
+      if (autoCuisine) {
+        apiTask = { type: 'strictLocalCuisine', direction: autoCuisine, geoSnapshot: cloneGeoSnapshot() };
+        output = await runStrictLocalCuisineSearch(apiTask, session.sid);
+      } else {
+        output = await callAPI(apiInput, session.sid);
+      }
+    } else {
+      output = await callAPI(apiInput, session.sid);
+    }
     if (isRateLimitError(output)) { errorType = 'rateLimit'; output = null; }
   } catch {
     errorType = 'network';
@@ -3384,7 +3556,7 @@ async function send() {
       }
     }
   } else {
-    if (currentSessionId === sessionId) appendErrorBubble(errorType, text);
+    if (currentSessionId === sessionId) appendErrorBubble(errorType, text, apiInput, apiTask);
   }
 
   busy = false;
@@ -3392,7 +3564,7 @@ async function send() {
   scroll();
 }
 
-async function resendRequest(lastUserText) {
+async function resendRequest(lastUserText, lastApiText, lastApiTask) {
   const btn = document.getElementById('btn');
   if (busy || btn.disabled) return;
   busy = true;
@@ -3410,8 +3582,13 @@ async function resendRequest(lastUserText) {
   const sessionId = session.id;
 
   let output = null, errorType = null;
+  const apiInput = ((lastApiText && String(lastApiText).trim()) || buildRecommendInputWithGeo(lastUserText)).trim();
   try {
-    output = await callAPI(buildRecommendInputWithGeo(lastUserText), session.sid);
+    if (lastApiTask && lastApiTask.type === 'strictLocalCuisine') {
+      output = await runStrictLocalCuisineSearch(lastApiTask, session.sid);
+    } else {
+      output = await callAPI(apiInput, session.sid);
+    }
     if (isRateLimitError(output)) { errorType = 'rateLimit'; output = null; }
   } catch {
     errorType = 'network';
@@ -3429,7 +3606,7 @@ async function resendRequest(lastUserText) {
       }
     }
   } else {
-    if (currentSessionId === sessionId) appendErrorBubble(errorType, lastUserText);
+    if (currentSessionId === sessionId) appendErrorBubble(errorType, lastUserText, apiInput, lastApiTask);
   }
 
   busy = false;
