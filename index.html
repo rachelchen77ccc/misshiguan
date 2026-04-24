@@ -1295,8 +1295,6 @@
     .decide-wheel-wrap { width: 236px; height: 236px; }
     .decide-wheel-seg { transform: rotate(var(--a)) translateY(-96px) rotate(calc(-1 * var(--a))); }
     .decide-custom-head { flex-direction: column; align-items: flex-start; gap: 4px; }
-    .fav-map-head { flex-direction: column; }
-    .fav-map-stat { min-width: 0; text-align: left; }
     .fav-city-grid,
     .fav-custom-grid { grid-template-columns: 1fr 1fr; }
     .fav-detail-title { font-size: 28px; }
@@ -1329,8 +1327,6 @@
     .decide-custom-input-row { flex-direction: column; }
     .decide-custom-add { width: 100%; justify-content: center; }
     .fav-view { padding-left: 16px; padding-right: 16px; }
-    .fav-map-panel { padding: 16px 16px 14px; border-radius: 20px; }
-    .fav-map-canvas { min-height: 320px; }
     .fav-city-grid,
     .fav-custom-grid { grid-template-columns: 1fr; }
     .fav-city-card,
@@ -1609,266 +1605,6 @@
     letter-spacing: -0.01em;
   }
   .fav-view-sub { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 28px; opacity: 0.7; }
-
-  .fav-map-panel {
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 30px;
-    padding: 20px 20px 18px;
-    border-radius: 24px;
-    border: 1px solid #E5D7CA;
-    background:
-      radial-gradient(circle at top left, rgba(255, 245, 235, 0.95) 0%, rgba(255, 245, 235, 0) 38%),
-      radial-gradient(circle at bottom right, rgba(232, 210, 190, 0.55) 0%, rgba(232, 210, 190, 0) 40%),
-      linear-gradient(180deg, #FCF7F1 0%, #F6EEE4 100%);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.65), 0 10px 30px rgba(95, 69, 46, 0.08);
-  }
-
-  .fav-map-panel::before,
-  .fav-map-panel::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-  }
-
-  .fav-map-panel::before {
-    background-image:
-      linear-gradient(rgba(197, 169, 145, 0.12) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(197, 169, 145, 0.12) 1px, transparent 1px);
-    background-size: 28px 28px;
-    opacity: 0.8;
-    mask-image: linear-gradient(180deg, rgba(0,0,0,0.7), rgba(0,0,0,0.22));
-  }
-
-  .fav-map-panel::after {
-    background:
-      radial-gradient(circle at 24% 32%, rgba(196, 98, 45, 0.1), transparent 24%),
-      radial-gradient(circle at 72% 58%, rgba(154, 122, 99, 0.12), transparent 18%);
-  }
-
-  .fav-map-head {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 18px;
-  }
-
-  .fav-map-eyebrow {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--color-accent);
-    margin-bottom: 7px;
-    opacity: 0.82;
-  }
-
-  .fav-map-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 22px;
-    line-height: 1.2;
-    color: var(--color-text-main);
-    letter-spacing: -0.01em;
-    margin-bottom: 6px;
-  }
-
-  .fav-map-sub {
-    max-width: 560px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    line-height: 1.7;
-    color: var(--color-text-secondary);
-  }
-
-  .fav-map-stat {
-    flex-shrink: 0;
-    min-width: 120px;
-    padding: 12px 13px 11px;
-    border-radius: 16px;
-    border: 1px solid rgba(216, 187, 166, 0.85);
-    background: rgba(255, 252, 247, 0.82);
-    text-align: right;
-  }
-
-  .fav-map-stat-label {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 11px;
-    line-height: 1.2;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--color-text-secondary);
-    opacity: 0.68;
-    margin-bottom: 6px;
-  }
-
-  .fav-map-stat-value {
-    font-family: 'Playfair Display', serif;
-    font-size: 26px;
-    line-height: 1;
-    color: var(--color-text-main);
-  }
-
-  .fav-map-canvas {
-    position: relative;
-    min-height: 380px;
-    border-radius: 20px;
-    border: 1px solid rgba(219, 200, 185, 0.9);
-    background:
-      linear-gradient(140deg, rgba(255,255,255,0.55), rgba(255,255,255,0.1)),
-      linear-gradient(180deg, rgba(251, 247, 241, 0.88), rgba(243, 233, 221, 0.92));
-    overflow: hidden;
-  }
-
-  .fav-real-map {
-    position: absolute;
-    inset: 0;
-  }
-
-  .fav-map-status {
-    position: absolute;
-    left: 16px;
-    right: 16px;
-    bottom: 14px;
-    z-index: 3;
-    padding: 10px 12px;
-    border-radius: 14px;
-    border: 1px solid rgba(223, 201, 184, 0.95);
-    background: rgba(255, 252, 247, 0.92);
-    backdrop-filter: blur(4px);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    line-height: 1.6;
-    color: var(--color-text-secondary);
-    box-shadow: 0 10px 24px rgba(95, 69, 46, 0.08);
-  }
-
-  .fav-map-status.hidden {
-    display: none;
-  }
-
-  .fav-map-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-top: 10px;
-  }
-
-  .fav-map-reset-btn {
-    border-radius: 999px;
-    border: 1px solid var(--color-border);
-    background: rgba(255,255,255,0.88);
-    color: var(--color-text-secondary);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    line-height: 1;
-    padding: 8px 12px;
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
-  }
-
-  .fav-map-reset-btn:hover {
-    background: var(--color-bg);
-    border-color: #D8B39B;
-    color: var(--color-accent);
-  }
-
-  .fav-map-legend {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 11px;
-    color: var(--color-text-secondary);
-    opacity: 0.78;
-  }
-
-  .fav-map-legend-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--color-accent);
-  }
-
-  .fav-map-route {
-    position: absolute;
-    border-radius: 999px;
-    background: linear-gradient(90deg, rgba(196, 98, 45, 0.2), rgba(154, 122, 99, 0.12));
-    transform-origin: left center;
-    opacity: 0.7;
-    pointer-events: none;
-  }
-
-  .fav-map-pin {
-    position: absolute;
-    z-index: 2;
-    transform: translate(-50%, -50%);
-    border: none;
-    background: transparent;
-    padding: 0;
-    cursor: pointer;
-    text-align: left;
-  }
-
-  .fav-map-pin-core {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--color-accent);
-    border: 3px solid rgba(255, 246, 238, 0.92);
-    box-shadow: 0 6px 18px rgba(118, 74, 40, 0.22);
-    margin-left: 12px;
-    position: relative;
-  }
-
-  .fav-map-pin-core::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 100%;
-    width: 2px;
-    height: 18px;
-    background: linear-gradient(180deg, rgba(196, 98, 45, 0.75), rgba(196, 98, 45, 0));
-    transform: translateX(-50%);
-  }
-
-  .fav-map-pin-card {
-    margin-top: 8px;
-    min-width: 98px;
-    max-width: 140px;
-    border-radius: 14px;
-    border: 1px solid rgba(223, 201, 184, 0.95);
-    background: rgba(255, 252, 247, 0.95);
-    padding: 9px 10px 8px;
-    box-shadow: 0 10px 22px rgba(95, 69, 46, 0.08);
-    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
-    backdrop-filter: blur(4px);
-  }
-
-  .fav-map-pin:hover .fav-map-pin-card,
-  .fav-map-pin.active .fav-map-pin-card {
-    transform: translateY(-2px);
-    border-color: #D8B39B;
-    box-shadow: 0 12px 28px rgba(95, 69, 46, 0.12);
-  }
-
-  .fav-map-pin-city {
-    font-family: 'Playfair Display', serif;
-    font-size: 16px;
-    line-height: 1.15;
-    color: var(--color-text-main);
-    margin-bottom: 4px;
-  }
-
-  .fav-map-pin-count {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 11px;
-    line-height: 1.3;
-    color: var(--color-text-secondary);
-  }
 
   .fav-section-head {
     display: flex;
@@ -2880,7 +2616,7 @@
         <button class="mode-switch-btn" data-mode="decide">今天吃什么</button>
       </div>
       <div class="input-inner">
-        <textarea id="inp" placeholder="例如：帮我找广州珠江新城适合约会的粤菜…" rows="1"></textarea>
+        <textarea id="inp" placeholder="例如：帮我找 Berlin Mitte 适合约会的 bistro…" rows="1"></textarea>
         <button class="send-btn" id="btn">
           <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
@@ -2945,22 +2681,17 @@ let favMetaEditingKey = null;
 let favMetaDraftTitle = '';
 let favMetaDraftCover = '';
 let favMetaDraftImage = '';
-let favoritesMapInstance = null;
-let favoritesMapInfoWindow = null;
-let favoritesMapMarkers = [];
-let favoritesMapLoadPromise = null;
-let favoritesMapLoadState = 'idle';
 
-const RECOMMEND_PLACEHOLDER = '例如：帮我找广州珠江新城适合约会的粤菜…';
+const RECOMMEND_PLACEHOLDER = '例如：帮我找 Berlin Mitte 适合约会的 bistro…';
 const DECIDE_PLACEHOLDER = '例如：帮我决定今天吃什么，想吃便宜又热乎的…';
 const DECIDE_CUSTOM_OPTIONS_KEY = 'misshiguan_custom_wheel_options_v1';
 const COLLECTION_META_KEY = 'misshiguan_collection_meta_v1';
-const GOOGLE_MAPS_BROWSER_KEY = "AIzaSyBlscluRE0GgDDpdjNWpLQNmLCR2T4Ch9M";
 const RECOMMEND_WELCOME_CHIPS = [
-  '上海外滩高档餐厅',
-  '北京三里屯咖啡厅',
-  '成都平价川菜',
-  'Berlin brunch spots'
+  'Berlin 一个人吃的中餐',
+  'Paris 适合约会的 bistro',
+  'London 平价拉面',
+  'Munich vegan dinner',
+  'Singapore brunch spots'
 ];
 const DECIDE_FILTER_GROUPS = [
   { key: 'mealType', label: '这一顿是？', fallback: '随便', options: ['早餐', 'brunch', '午餐', '下午茶', '晚餐', '夜宵', '随便'] },
@@ -3281,8 +3012,6 @@ function setRestaurantInCollection(restaurant, collName, shouldAdd) {
       rating: restaurant.rating,
       address: restaurant.address,
       mapUrl: restaurant.mapUrl,
-      lat: Number.isFinite(Number(restaurant.lat)) ? Number(restaurant.lat) : null,
-      lng: Number.isFinite(Number(restaurant.lng)) ? Number(restaurant.lng) : null,
       savedAt: Date.now()
     });
   } else {
@@ -3302,8 +3031,6 @@ function addToNewCollection(collName, restaurant) {
       rating: restaurant.rating,
       address: restaurant.address,
       mapUrl: restaurant.mapUrl,
-      lat: Number.isFinite(Number(restaurant.lat)) ? Number(restaurant.lat) : null,
-      lng: Number.isFinite(Number(restaurant.lng)) ? Number(restaurant.lng) : null,
       savedAt: Date.now()
     });
     added = true;
@@ -3403,207 +3130,6 @@ function groupFavoritesByCity(favs) {
     .sort((a, b) => b.count - a.count || a.city.localeCompare(b.city));
 }
 
-function getCityMapLayout(groups) {
-  const fallbackPoints = [
-    [18, 28], [42, 20], [67, 30], [28, 56], [56, 52], [80, 60], [22, 78], [49, 76], [74, 82]
-  ];
-  return groups.map((group, index) => {
-    const base = fallbackPoints[index % fallbackPoints.length];
-    const wobble = hashString(group.city);
-    const left = Math.max(10, Math.min(90, base[0] + (wobble % 9) - 4));
-    const top = Math.max(14, Math.min(84, base[1] + (Math.floor(wobble / 10) % 11) - 5));
-    return { key: group.key, left, top };
-  });
-}
-
-function getGoogleMapsFrontendKey() {
-  try {
-    if (GOOGLE_MAPS_BROWSER_KEY && !GOOGLE_MAPS_BROWSER_KEY.includes('__PASTE_')) return GOOGLE_MAPS_BROWSER_KEY;
-    if (window.MISSHIGUAN_GOOGLE_MAPS_API_KEY) return window.MISSHIGUAN_GOOGLE_MAPS_API_KEY;
-    if (window.GOOGLE_MAPS_API_KEY) return window.GOOGLE_MAPS_API_KEY;
-    if (window.__GOOGLE_MAPS_API_KEY__) return window.__GOOGLE_MAPS_API_KEY__;
-  } catch {}
-  return '';
-}
-
-function ensureGoogleMapsSdk() {
-  if (typeof window === 'undefined') return Promise.reject(new Error('no window'));
-  if (window.google && window.google.maps) {
-    favoritesMapLoadState = 'ready';
-    return Promise.resolve(window.google.maps);
-  }
-  if (favoritesMapLoadPromise) return favoritesMapLoadPromise;
-  const apiKey = getGoogleMapsFrontendKey();
-  if (!apiKey) {
-    favoritesMapLoadState = 'missing-key';
-    return Promise.reject(new Error('missing google maps key'));
-  }
-  favoritesMapLoadState = 'loading';
-  favoritesMapLoadPromise = new Promise((resolve, reject) => {
-    const callbackName = '__misshiguanGoogleMapsInit';
-    window[callbackName] = () => {
-      favoritesMapLoadState = 'ready';
-      resolve(window.google.maps);
-      delete window[callbackName];
-    };
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&callback=${callbackName}`;
-    script.async = true;
-    script.defer = true;
-    script.onerror = () => {
-      favoritesMapLoadState = 'error';
-      reject(new Error('google maps failed to load'));
-      delete window[callbackName];
-    };
-    (document.head || document.body || document.documentElement).appendChild(script);
-  });
-  return favoritesMapLoadPromise;
-}
-
-function extractCoordsFromMapUrl(url) {
-  const raw = decodeMapUrlHint(url);
-  if (!raw) return null;
-  const atMatch = raw.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
-  if (atMatch) return { lat: parseFloat(atMatch[1]), lng: parseFloat(atMatch[2]) };
-  const bangMatch = raw.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
-  if (bangMatch) return { lat: parseFloat(bangMatch[1]), lng: parseFloat(bangMatch[2]) };
-  const qMatch = raw.match(/[?&](?:q|query)=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/i);
-  if (qMatch) return { lat: parseFloat(qMatch[1]), lng: parseFloat(qMatch[2]) };
-  const llMatch = raw.match(/[?&]ll=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/i);
-  if (llMatch) return { lat: parseFloat(llMatch[1]), lng: parseFloat(llMatch[2]) };
-  return null;
-}
-
-function getFavoriteCoords(favorite) {
-  if (!favorite) return null;
-  const geometryLocation = favorite.geometry && favorite.geometry.location ? favorite.geometry.location : null;
-  const rawLat = favorite.lat ?? favorite.latitude ?? (geometryLocation ? (typeof geometryLocation.lat === 'function' ? geometryLocation.lat() : geometryLocation.lat) : undefined);
-  const rawLng = favorite.lng ?? favorite.longitude ?? (geometryLocation ? (typeof geometryLocation.lng === 'function' ? geometryLocation.lng() : geometryLocation.lng) : undefined);
-  const directLat = Number(rawLat);
-  const directLng = Number(rawLng);
-  if (Number.isFinite(directLat) && Number.isFinite(directLng)) return { lat: directLat, lng: directLng };
-  const parsed = extractCoordsFromMapUrl(favorite.mapUrl);
-  if (parsed && Number.isFinite(parsed.lat) && Number.isFinite(parsed.lng)) return parsed;
-  return null;
-}
-
-function buildFavoritesMapItems(favs) {
-  return flattenFavoritesWithCollections(favs).map(item => {
-    const city = inferCityFromFavorite(item);
-    const coords = getFavoriteCoords(item);
-    return {
-      ...item,
-      city,
-      cityKey: buildCollectionMetaKey('city', city),
-      coords
-    };
-  });
-}
-
-function getVisibleFavoritesMapItems(items) {
-  return favExpandedCity ? items.filter(item => item.cityKey === favExpandedCity) : items;
-}
-
-function getFavoritesMapStatus(items, visibleItems) {
-  const withCoords = visibleItems.filter(item => item.coords);
-  const missingCount = visibleItems.length - withCoords.length;
-  if (favoritesMapLoadState === 'missing-key') return '地图暂时没有加载出来，收藏清单还在下面。';
-  if (favoritesMapLoadState === 'error') return '地图暂时没有加载出来，收藏清单还在下面。';
-  if (favExpandedCity && visibleItems.length > 0 && withCoords.length === 0) return '这座城市的收藏还没有坐标，先从清单里看看。';
-  if (!favExpandedCity && items.length > 0 && items.every(item => !item.coords)) return '部分收藏还在清单里，暂时没有标在地图上。';
-  if (missingCount > 0) return '部分收藏还在清单里，暂时没有标在地图上。';
-  return '';
-}
-
-function clearFavoritesMapMarkers() {
-  favoritesMapMarkers.forEach(marker => marker.setMap(null));
-  favoritesMapMarkers = [];
-}
-
-function buildMapInfoContent(item) {
-  return `
-    <div style="min-width:220px;max-width:280px;font-family:'DM Sans',sans-serif;color:#2b2118;padding:4px 2px 2px;">
-      <div style="font-family:'Playfair Display',serif;font-size:18px;line-height:1.2;color:#1A1209;margin-bottom:6px;">${esc(item.name || '收藏餐厅')}</div>
-      ${item.rating ? `<div style="font-size:12px;line-height:1.5;color:#7A6858;margin-bottom:4px;">⭐ ${esc(item.rating)} 分</div>` : ''}
-      ${item.address ? `<div style="font-size:12px;line-height:1.6;color:#7A6858;margin-bottom:4px;">${esc(item.address)}</div>` : ''}
-      <div style="font-size:11px;line-height:1.5;color:#8a7868;margin-bottom:8px;">${esc(item.city || '其他收藏')}${item.collections && item.collections.length ? ` · ${esc(item.collections.join(' / '))}` : ''}</div>
-      ${item.mapUrl ? `<a href="${item.mapUrl}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;border-radius:999px;border:1px solid #E3B89B;background:#FFF1E8;color:#C4622D;font-size:12px;line-height:1;padding:8px 12px;text-decoration:none;">打开地图</a>` : ''}
-    </div>
-  `;
-}
-
-function syncFavoritesRealMap(favs) {
-  const mapEl = document.getElementById('favoritesRealMap');
-  const statusEl = document.getElementById('favoritesMapStatus');
-  if (!mapEl || !statusEl) return;
-
-  const allItems = buildFavoritesMapItems(favs);
-  const visibleItems = getVisibleFavoritesMapItems(allItems);
-  const visibleMarkers = visibleItems.filter(item => item.coords);
-
-  const setStatus = (text) => {
-    statusEl.textContent = text || '';
-    statusEl.classList.toggle('hidden', !text);
-  };
-
-  setStatus(getFavoritesMapStatus(allItems, visibleItems));
-
-  ensureGoogleMapsSdk().then((maps) => {
-    if (!mapEl.isConnected) return;
-    if (!favoritesMapInstance) {
-      favoritesMapInstance = new maps.Map(mapEl, {
-        center: { lat: 20, lng: 10 },
-        zoom: 2,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: false,
-        styles: [
-          { elementType: 'geometry', stylers: [{ color: '#f5efe6' }] },
-          { elementType: 'labels.text.fill', stylers: [{ color: '#7b6a5b' }] },
-          { elementType: 'labels.text.stroke', stylers: [{ color: '#f9f5ef' }] },
-          { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#d9e4e1' }] },
-          { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#eadfce' }] },
-          { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#efe5d8' }] }
-        ]
-      });
-      favoritesMapInfoWindow = new maps.InfoWindow();
-    }
-
-    clearFavoritesMapMarkers();
-
-    if (visibleMarkers.length === 0) {
-      favoritesMapInstance.setCenter({ lat: 20, lng: 10 });
-      favoritesMapInstance.setZoom(2);
-      return;
-    }
-
-    const bounds = new maps.LatLngBounds();
-    visibleMarkers.forEach(item => {
-      const marker = new maps.Marker({
-        position: item.coords,
-        map: favoritesMapInstance,
-        title: item.name || item.city,
-        animation: maps.Animation.DROP
-      });
-      marker.addListener('click', () => {
-        favoritesMapInfoWindow.setContent(buildMapInfoContent(item));
-        favoritesMapInfoWindow.open(favoritesMapInstance, marker);
-      });
-      favoritesMapMarkers.push(marker);
-      bounds.extend(item.coords);
-    });
-
-    if (visibleMarkers.length === 1) {
-      favoritesMapInstance.setCenter(visibleMarkers[0].coords);
-      favoritesMapInstance.setZoom(13);
-    } else {
-      favoritesMapInstance.fitBounds(bounds, 72);
-    }
-  }).catch(() => {
-    setStatus('地图暂时没有加载出来，收藏清单还在下面。');
-  });
-}
-
 /* ── UTILS ── */
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -3639,9 +3165,9 @@ function textLooksLikeHasLocation(text) {
   if (/(附近|周边|定位|当前位置|location|city|near|around|district)/i.test(raw)) return true;
   if (/\b\d{1,3}\.\d{3,}\s*,\s*\d{1,3}\.\d{3,}\b/.test(raw)) return true;
   if (/(?:在|去|到|near|around|in|at)\s*[A-Za-z\u4e00-\u9fa5]{2,}/i.test(raw)) return true;
-  if (/[\u4e00-\u9fa5]{2,}(市|区|县|镇|乡|村|路|街|道|巷|里|湾|站|机场|公园|广场|商圈|新城|外滩|三里屯)/.test(raw)) return true;
+  if (/[\u4e00-\u9fa5]{2,}(市|区|县|镇|乡|村|路|街|道|巷|里|湾|站|机场|公园|广场|商圈|新城)/.test(raw)) return true;
   if (/\b[A-Za-z][A-Za-z\s'-]{2,}\s(city|district|downtown|uptown|center|centre|cbd)\b/i.test(raw)) return true;
-  const named = ['柏林', 'Berlin', '上海', '北京', '广州', '深圳', '杭州', '南京', '武汉', '西安', '重庆', '天津', '苏州', '成都', '纽约', '伦敦', '巴黎', '东京', 'Shanghai', 'Beijing', 'Guangzhou', 'Shenzhen', 'Hangzhou', 'Nanjing', 'Wuhan', 'Chongqing', 'Tianjin', 'Suzhou', 'Chengdu', 'New York', 'London', 'Paris', 'Tokyo'];
+  const named = ['柏林', '慕尼黑', '巴黎', '伦敦', '东京', '新加坡', '阿姆斯特丹', '纽约', 'Berlin', 'Munich', 'Paris', 'London', 'Tokyo', 'Singapore', 'Amsterdam', 'New York', 'Hong Kong', 'San Sebastian'];
   return named.some(loc => raw.toLowerCase().includes(String(loc).toLowerCase()));
 }
 
@@ -3665,7 +3191,7 @@ function getGeoHintText() {
   if (geoStatus === 'ready' && geoData) {
     return `已获取默认位置：${guessGeoLabel(geoData) || '你的当前位置'}。你仍可随时手动输入其他城市或区域，且手动输入始终优先。`;
   }
-  if (geoStatus === 'denied') return '你已拒绝定位权限，没关系，直接输入城市也可以（例如：上海静安）。';
+  if (geoStatus === 'denied') return '你已拒绝定位权限，没关系，直接输入城市也可以（例如：Berlin Mitte）。';
   if (geoStatus === 'error') return `定位暂不可用（${geoError || '未知原因'}），你仍可直接输入城市继续。`;
   return '可选：点击「📍 使用当前位置」让我更快定位到你附近的推荐。';
 }
@@ -4470,8 +3996,8 @@ function renderMessages() {
     const recommendActive = currentMode === 'recommend' ? ' active' : '';
     const decideActive = currentMode === 'decide' ? ' active' : '';
     const modeSub = currentMode === 'decide'
-      ? '先决定今天吃什么方向，再进入找店。'
-      : '告诉我城市、预算或场景，我来帮你筛出更合适的餐厅。';
+      ? '不想想太多，选个状态，让觅食官帮你决定。'
+      : '告诉我你在哪座城市、想吃什么，或这顿饭是什么场景。';
     const chips = currentMode === 'decide'
       ? ''
       : `<span class="chip chip-geo${geoStatus === 'requesting' ? ' is-loading' : ''}" data-geo-action="locate">${geoStatus === 'requesting' ? '📍 正在获取位置…' : '📍 使用当前位置'}</span>
@@ -4577,11 +4103,11 @@ function renderMessages() {
       <div class="home-entry-grid">
         <div class="home-entry-card${recommendActive}" data-mode-card="recommend">
           <div class="home-entry-title">推荐餐厅</div>
-          <div class="home-entry-sub">输入偏好，给你一份当下更好选的餐厅方向。</div>
+          <div class="home-entry-sub">输入城市、口味或场景，帮你筛出更适合的一餐。</div>
         </div>
         <div class="home-entry-card${decideActive}" data-mode-card="decide">
           <div class="home-entry-title">今天吃什么</div>
-          <div class="home-entry-sub">不想想太多，选个状态让我帮你决定。</div>
+          <div class="home-entry-sub">不想想太多，选个状态，让觅食官帮你决定。</div>
         </div>
       </div>
       <p class="welcome-mode-sub">${modeSub}</p>
@@ -4851,12 +4377,7 @@ function hideTyping() {
 
 /* ── RESTAURANT PARSING ── */
 function parseRestaurants(text) {
-  const { cleanText, metadata } = extractHiddenRestaurantMeta(text);
-  const metaByName = new Map();
-  metadata.forEach(item => {
-    const key = normalizeRestaurantMetaName(item && item.name);
-    if (key) metaByName.set(key, item);
-  });
+  const { cleanText } = extractHiddenRestaurantMeta(text);
   const blocks = cleanText.split(/(?=🍽️)/);
   const restaurants = [], others = [];
   blocks.forEach(b => {
@@ -4873,7 +4394,6 @@ function parseRestaurants(text) {
       const reviewSignal = matchRestaurantField(b, ['小提醒']);
       if (nm) {
         const name = nm[1].trim();
-        const meta = metaByName.get(normalizeRestaurantMetaName(name)) || null;
         restaurants.push({
           name,
           rating: rt ? rt[1] : null,
@@ -4885,8 +4405,6 @@ function parseRestaurants(text) {
           warmRecommendation,
           reviewSignal,
           mapUrl: lk ? lk[2] : null,
-          lat: meta && Number.isFinite(Number(meta.lat)) ? Number(meta.lat) : null,
-          lng: meta && Number.isFinite(Number(meta.lng)) ? Number(meta.lng) : null,
         });
       }
     } else {
@@ -4943,15 +4461,6 @@ function renderRestaurantReasoning(restaurant) {
     parts.push(`<div class="card-note"><span class="card-note-label">小提醒</span>${esc(restaurant.reviewSignal)}</div>`);
   }
   return parts.length ? `<div class="card-reasoning">${parts.join('')}</div>` : '';
-}
-
-function normalizeRestaurantMetaName(name) {
-  return String(name || '')
-    .replace(/\*\*/g, '')
-    .replace(/[“”"'`]/g, '')
-    .replace(/\s+/g, '')
-    .trim()
-    .toLowerCase();
 }
 
 function extractHiddenRestaurantMeta(text) {
@@ -5164,50 +4673,6 @@ function renderFavoriteRows(list, options = {}) {
   `).join('');
 }
 
-function renderFavoritesMap(groups, favs) {
-  const mapItems = buildFavoritesMapItems(favs || {});
-  const visibleItems = getVisibleFavoritesMapItems(mapItems);
-  const statusText = getFavoritesMapStatus(mapItems, visibleItems);
-  const activeGroup = groups.find(group => group.key === favExpandedCity) || null;
-  if (groups.length === 0) {
-    return `
-      <div class="fav-map-panel">
-        <div class="fav-map-head">
-          <div>
-            <div class="fav-map-eyebrow">Food Atlas</div>
-            <div class="fav-map-title">还没有形成你的美食地图</div>
-            <div class="fav-map-sub">还没有收藏。遇到想去的店，就先收起来。</div>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-  const totalRestaurants = groups.reduce((sum, group) => sum + group.count, 0);
-  return `
-    <div class="fav-map-panel">
-      <div class="fav-map-head">
-        <div>
-          <div class="fav-map-eyebrow">Food Atlas</div>
-          <div class="fav-map-title">把想吃、吃过、还想再去的地方，都收进你的美食地图。</div>
-          <div class="fav-map-sub">${activeGroup ? `${esc(activeGroup.city)} 的收藏已经落到地图上了。` : '拖一拖，放大看看你把哪些地方收进来了。'}</div>
-        </div>
-        <div class="fav-map-stat">
-          <div class="fav-map-stat-label">已收进地图</div>
-          <div class="fav-map-stat-value">${totalRestaurants}</div>
-        </div>
-      </div>
-      <div class="fav-map-canvas">
-        <div class="fav-real-map" id="favoritesRealMap"></div>
-        <div class="fav-map-status${statusText ? '' : ' hidden'}" id="favoritesMapStatus">${statusText || ''}</div>
-      </div>
-      <div class="fav-map-actions">
-        <span class="fav-map-legend"><span class="fav-map-legend-dot"></span>${activeGroup ? `正在看 ${esc(activeGroup.city)}` : '正在看全部收藏'}</span>
-        ${activeGroup ? `<button class="fav-map-reset-btn" type="button" data-map-reset>查看全部收藏</button>` : ''}
-      </div>
-    </div>
-  `;
-}
-
 function renderCityCollections(groups) {
   if (groups.length === 0) return '';
   return `
@@ -5215,7 +4680,7 @@ function renderCityCollections(groups) {
       <div class="fav-section-head">
         <div>
           <div class="fav-section-title">城市合集</div>
-          <div class="fav-section-sub">按城市收好，下一次出发前直接翻。</div>
+          <div class="fav-section-sub">按城市收好，下次出发前直接翻。</div>
         </div>
       </div>
       <div class="fav-city-grid">
@@ -5378,16 +4843,14 @@ function renderFavView() {
   }
   if (favExpandedCity && !cityGroups.some(group => group.key === favExpandedCity)) favExpandedCity = null;
   if (favMetaEditingKey && !activeMetaKeys.includes(favMetaEditingKey)) closeCollectionMetaEditor();
-  el.innerHTML = `<div class="fav-view-title">我的收藏</div><div class="fav-view-sub">把想吃的地方，慢慢存成自己的美食地图。</div>`;
+  el.innerHTML = `<div class="fav-view-title">我的收藏</div><div class="fav-view-sub">把想吃、吃过、还想再去的地方，慢慢存成自己的清单。</div>`;
   if (colls.length === 0) {
-    el.innerHTML += renderFavoritesMap([]);
     const empty = document.createElement('div');
     empty.className = 'fav-empty-state';
     empty.innerHTML = `<div class="fav-empty-icon">🍽️</div><div class="fav-empty-title">还没有收藏</div><div class="fav-empty-sub">遇到想去的店，就先收起来。</div>`;
     el.appendChild(empty);
     return;
   }
-  el.innerHTML += renderFavoritesMap(cityGroups, f);
   el.innerHTML += renderExpandedCityDetail(cityGroups);
   el.innerHTML += renderCityCollections(cityGroups);
   el.innerHTML += renderCustomCollectionsSection(f);
@@ -5398,13 +4861,6 @@ function renderFavView() {
       renderFavView();
       const detail = document.getElementById('favCityDetail');
       if (detail) detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-  });
-
-  el.querySelectorAll('[data-map-reset]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      favExpandedCity = null;
-      renderFavView();
     });
   });
 
@@ -5557,8 +5013,6 @@ function renderFavView() {
   if (metaInput) {
     setTimeout(() => metaInput.focus(), 0);
   }
-
-  syncFavoritesRealMap(f);
 }
 
 /* ── FOLLOW-UP CHIPS ── */
