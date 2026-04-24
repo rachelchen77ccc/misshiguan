@@ -789,6 +789,7 @@
   .card-rating {
     display: flex;
     align-items: baseline;
+    flex-wrap: wrap;
     gap: 5px;
     margin-bottom: var(--element-gap);
   }
@@ -804,6 +805,14 @@
     font-family: 'DM Sans', sans-serif;
     font-size: var(--label-size);
     color: var(--color-text-secondary);
+    font-weight: var(--body-weight);
+  }
+
+  .card-rating-count {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    opacity: 0.72;
     font-weight: var(--body-weight);
   }
 
@@ -843,6 +852,80 @@
     padding-left: 12px;
     margin-bottom: var(--element-gap);
     font-weight: 400;
+  }
+
+  .card-reasoning {
+    margin: calc(var(--element-gap) * 1.1) 0 var(--element-gap);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .card-suitable {
+    border: 1px solid #E9D5C6;
+    background: linear-gradient(180deg, #FFF7F0 0%, #FDF5EE 100%);
+    border-radius: 14px;
+    padding: 11px 12px 10px;
+    min-width: 0;
+  }
+
+  .card-suitable-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    line-height: 1;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin-bottom: 7px;
+    font-weight: 500;
+  }
+
+  .card-suitable-text {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--color-text-main);
+    overflow-wrap: anywhere;
+  }
+
+  .card-story {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    line-height: 1.72;
+    color: var(--color-text-main);
+    padding-left: 12px;
+    border-left: 2px solid #D8B39B;
+    min-width: 0;
+  }
+
+  .card-story::before,
+  .card-story::after {
+    color: #C79A7D;
+    opacity: 0.7;
+  }
+
+  .card-story::before { content: "“"; margin-right: 1px; }
+  .card-story::after { content: "”"; margin-left: 1px; }
+
+  .card-note {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1.65;
+    color: var(--color-text-secondary);
+    background: rgba(229, 221, 212, 0.3);
+    border-radius: 12px;
+    padding: 9px 11px;
+    overflow-wrap: anywhere;
+  }
+
+  .card-note-label {
+    color: var(--color-text-main);
+    opacity: 0.72;
+    margin-right: 4px;
   }
 
   .card-link {
@@ -1067,6 +1150,9 @@
 
     /* Cards: tighter padding on mobile */
     .r-card { padding: 16px; }
+
+    .card-story { font-size: 15px; }
+    .card-suitable { padding: 10px 11px; }
 
     /* Chat wrap: less top breathing room on small screens */
     .chat-wrap { padding-top: 20px; }
@@ -2376,10 +2462,14 @@ function formatRestaurantsAsText(restaurants, leadText) {
   const intro = leadText ? `${leadText}\n\n` : '';
   const blocks = restaurants.map(r => {
     const lines = [`🍽️ **${r.name || '推荐餐厅'}**`];
-    if (r.rating) lines.push(`⭐ ${r.rating}`);
+    if (r.rating && r.ratingCount) lines.push(`⭐ ${r.rating}（${r.ratingCount}）`);
+    else if (r.rating) lines.push(`⭐ ${r.rating}`);
     if (r.address) lines.push(`📍 ${r.address}`);
     if (r.hours) lines.push(`🕐 ${r.hours}`);
-    if (r.quote) lines.push(`💬 ${r.quote}`);
+    if (r.suitableReason) lines.push(`适合你：${r.suitableReason}`);
+    if (r.warmRecommendation) lines.push(`一句有温度的推荐语：${r.warmRecommendation}`);
+    else if (r.quote) lines.push(`💬 ${r.quote}`);
+    if (r.reviewSignal) lines.push(`小提醒：${r.reviewSignal}`);
     if (r.mapUrl) lines.push(`[查看 Google Maps](${r.mapUrl})`);
     return lines.join('\n');
   });
@@ -3001,13 +3091,14 @@ function appendBotBubbles(text) {
       card.className = 'r-card' + (i >= 3 ? ' mobile-fold' : '');
       card.style.animationDelay = (i * 0.07) + 's';
       const saved = isFavorited(r.name, r.address);
+      const narrativeHtml = renderRestaurantReasoning(r);
       card.innerHTML = `
         <div class="card-index">${String(i + 1).padStart(2, '0')}</div>
         <div class="card-name">${esc(r.name)}</div>
-        ${r.rating ? `<div class="card-rating"><span class="card-stars">${starStr(r.rating)}</span><span class="card-score">&thinsp;${esc(r.rating)} 分</span></div>` : ''}
+        ${renderRestaurantRating(r)}
         ${r.address ? `<div class="card-meta"><span class="meta-icon">📍</span><span>${esc(r.address)}</span></div>` : ''}
         ${r.hours   ? `<div class="card-meta"><span class="meta-icon">🕐</span><span>${esc(r.hours)}</span></div>` : ''}
-        ${r.quote   ? `<hr class="card-divider"><div class="card-quote">${esc(r.quote)}</div>` : ''}
+        ${narrativeHtml ? `<hr class="card-divider">${narrativeHtml}` : ''}
         ${r.mapUrl  ? `<a class="card-link" href="${r.mapUrl}" target="_blank">查看地图 →</a>` : ''}
       `;
       const favBtn = document.createElement('button');
@@ -3105,17 +3196,24 @@ function parseRestaurants(text) {
     b = b.trim(); if (!b) return;
     if (b.startsWith('🍽️')) {
       const nm = b.match(/🍽️\s*\*?\*?([^\n*]+)\*?\*?/);
-      const rt = b.match(/⭐\s*([\d.]+)/);
+      const rt = b.match(/⭐\s*([\d.]+)(?:\s*[（(]([^)）]+)[)）])?/);
       const ad = b.match(/📍\s*([^\n]+)/);
       const hr = b.match(/🕐\s*([^\n]+)/);
       const qt = b.match(/💬\s*([^\n]+)/);
       const lk = b.match(/\[([^\]]*(?:Google Maps|查看)[^\]]*)\]\((https?:\/\/[^\)]+)\)/i);
+      const suitableReason = matchRestaurantField(b, ['适合你']);
+      const warmRecommendation = matchRestaurantField(b, ['一句有温度的推荐语', '推荐语']);
+      const reviewSignal = matchRestaurantField(b, ['小提醒']);
       if (nm) restaurants.push({
         name: nm[1].trim(),
         rating: rt ? rt[1] : null,
+        ratingCount: rt && rt[2] ? rt[2].trim() : null,
         address: ad ? ad[1].trim() : null,
         hours: hr ? hr[1].trim() : null,
         quote: qt ? qt[1].trim() : null,
+        suitableReason,
+        warmRecommendation,
+        reviewSignal,
         mapUrl: lk ? lk[2] : null,
       });
     } else {
@@ -3129,6 +3227,49 @@ function starStr(r) {
   if (!r) return '';
   const n = parseFloat(r), f = Math.floor(n);
   return '★'.repeat(f) + (n%1>=0.5?'½':'') + '☆'.repeat(5-f-(n%1>=0.5?1:0));
+}
+
+function matchRestaurantField(block, labels) {
+  for (const label of labels) {
+    const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = block.match(new RegExp(`(?:^|\\n)${escaped}\\s*[：:]\\s*([^\\n]+)`));
+    if (match && match[1]) return match[1].trim();
+  }
+  return null;
+}
+
+function renderRestaurantRating(restaurant) {
+  if (!restaurant || !restaurant.rating) return '';
+  return `
+    <div class="card-rating">
+      <span class="card-stars">${starStr(restaurant.rating)}</span>
+      <span class="card-score">&thinsp;${esc(restaurant.rating)} 分</span>
+      ${restaurant.ratingCount ? `<span class="card-rating-count">(${esc(restaurant.ratingCount)})</span>` : ''}
+    </div>
+  `;
+}
+
+function renderRestaurantReasoning(restaurant) {
+  if (!restaurant) return '';
+  const warmText = restaurant.warmRecommendation || restaurant.quote;
+  const parts = [];
+  if (restaurant.suitableReason) {
+    parts.push(`
+      <div class="card-suitable">
+        <div class="card-suitable-label">适合你</div>
+        <div class="card-suitable-text">${esc(restaurant.suitableReason)}</div>
+      </div>
+    `);
+  }
+  if (warmText) {
+    parts.push(`<div class="card-story">${esc(warmText)}</div>`);
+  } else if (restaurant.quote) {
+    parts.push(`<div class="card-quote">${esc(restaurant.quote)}</div>`);
+  }
+  if (restaurant.reviewSignal) {
+    parts.push(`<div class="card-note"><span class="card-note-label">小提醒</span>${esc(restaurant.reviewSignal)}</div>`);
+  }
+  return parts.length ? `<div class="card-reasoning">${parts.join('')}</div>` : '';
 }
 
 /* ── FAV POPOVER ── */
@@ -3731,10 +3872,12 @@ async function generateShareImage(restaurants) {
     <div style="background:#FDFAF6;border:1px solid #E5DDD4;border-radius:12px;padding:18px 20px;margin-bottom:10px;">
       <div style="font-family:'DM Sans',sans-serif;font-size:10px;font-weight:500;color:#CCBFB3;letter-spacing:0.06em;margin-bottom:7px;">${String(i+1).padStart(2,'0')}</div>
       <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:600;color:#1A1209;line-height:1.3;margin-bottom:7px;letter-spacing:-0.005em;">${esc(r.name)}</div>
-      ${r.rating ? `<div style="font-family:'DM Sans',sans-serif;font-size:12px;color:#C4622D;margin-bottom:5px;"><span>${starStr(r.rating)}</span> <span style="color:#7A6858;">${esc(r.rating)} 分</span></div>` : ''}
+      ${r.rating ? `<div style="font-family:'DM Sans',sans-serif;font-size:12px;color:#C4622D;margin-bottom:5px;"><span>${starStr(r.rating)}</span> <span style="color:#7A6858;">${esc(r.rating)} 分</span>${r.ratingCount ? ` <span style="color:#7A6858;opacity:0.72;">(${esc(r.ratingCount)})</span>` : ''}</div>` : ''}
       ${r.address ? `<div style="font-family:'DM Sans',sans-serif;font-size:12px;color:#7A6858;margin-bottom:4px;">📍 ${esc(r.address)}</div>` : ''}
       ${r.hours ? `<div style="font-family:'DM Sans',sans-serif;font-size:12px;color:#7A6858;margin-bottom:4px;">🕐 ${esc(r.hours)}</div>` : ''}
-      ${r.quote ? `<div style="font-family:'Playfair Display',serif;font-style:italic;font-size:13px;color:#7A6858;line-height:1.65;border-left:2px solid #C4622D;padding-left:11px;margin-top:9px;">${esc(r.quote)}</div>` : ''}
+      ${r.suitableReason ? `<div style="margin-top:10px;border:1px solid #E9D5C6;background:linear-gradient(180deg,#FFF7F0 0%,#FDF5EE 100%);border-radius:12px;padding:9px 10px;"><div style="font-family:'DM Sans',sans-serif;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#C4622D;margin-bottom:5px;">适合你</div><div style="font-family:'DM Sans',sans-serif;font-size:12px;line-height:1.6;color:#1A1209;">${esc(r.suitableReason)}</div></div>` : ''}
+      ${(r.warmRecommendation || r.quote) ? `<div style="font-family:'Playfair Display',serif;font-size:13px;color:#7A6858;line-height:1.7;border-left:2px solid #C4622D;padding-left:11px;margin-top:10px;">“${esc(r.warmRecommendation || r.quote)}”</div>` : ''}
+      ${r.reviewSignal ? `<div style="font-family:'DM Sans',sans-serif;font-size:11px;color:#7A6858;line-height:1.6;background:rgba(229,221,212,0.3);border-radius:10px;padding:8px 10px;margin-top:9px;"><span style="color:#1A1209;opacity:0.72;margin-right:4px;">小提醒</span>${esc(r.reviewSignal)}</div>` : ''}
     </div>
   `).join('');
 
