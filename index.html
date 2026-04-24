@@ -3276,7 +3276,15 @@ function setRestaurantInCollection(restaurant, collName, shouldAdd) {
   if (!f[collName]) f[collName] = [];
   const idx = f[collName].findIndex(r => favKey(r.name, r.address) === k);
   if (shouldAdd) {
-    if (idx === -1) f[collName].push({ name: restaurant.name, rating: restaurant.rating, address: restaurant.address, mapUrl: restaurant.mapUrl, savedAt: Date.now() });
+    if (idx === -1) f[collName].push({
+      name: restaurant.name,
+      rating: restaurant.rating,
+      address: restaurant.address,
+      mapUrl: restaurant.mapUrl,
+      lat: Number.isFinite(Number(restaurant.lat)) ? Number(restaurant.lat) : null,
+      lng: Number.isFinite(Number(restaurant.lng)) ? Number(restaurant.lng) : null,
+      savedAt: Date.now()
+    });
   } else {
     if (idx !== -1) f[collName].splice(idx, 1);
     if (f[collName].length === 0) delete f[collName];
@@ -3289,7 +3297,15 @@ function addToNewCollection(collName, restaurant) {
   if (!f[collName]) f[collName] = [];
   let added = false;
   if (!f[collName].some(r => favKey(r.name, r.address) === k)) {
-    f[collName].push({ name: restaurant.name, rating: restaurant.rating, address: restaurant.address, mapUrl: restaurant.mapUrl, savedAt: Date.now() });
+    f[collName].push({
+      name: restaurant.name,
+      rating: restaurant.rating,
+      address: restaurant.address,
+      mapUrl: restaurant.mapUrl,
+      lat: Number.isFinite(Number(restaurant.lat)) ? Number(restaurant.lat) : null,
+      lng: Number.isFinite(Number(restaurant.lng)) ? Number(restaurant.lng) : null,
+      savedAt: Date.now()
+    });
     added = true;
   }
   saveFavs(f); return added;
@@ -3494,8 +3510,8 @@ function getFavoritesMapStatus(items, visibleItems) {
   if (favoritesMapLoadState === 'missing-key') return '地图暂时没有加载出来，收藏清单还在下面。';
   if (favoritesMapLoadState === 'error') return '地图暂时没有加载出来，收藏清单还在下面。';
   if (favExpandedCity && visibleItems.length > 0 && withCoords.length === 0) return '这座城市的收藏还没有坐标，先从清单里看看。';
-  if (!favExpandedCity && items.length > 0 && items.every(item => !item.coords)) return '部分收藏缺少坐标，暂未出现在地图上。';
-  if (missingCount > 0) return '部分收藏缺少坐标，暂未出现在地图上。';
+  if (!favExpandedCity && items.length > 0 && items.every(item => !item.coords)) return '部分收藏还在清单里，暂时没有标在地图上。';
+  if (missingCount > 0) return '部分收藏还在清单里，暂时没有标在地图上。';
   return '';
 }
 
@@ -4695,6 +4711,7 @@ function appendUserBubble(text) {
 
 function appendBotBubbles(text) {
   const c = document.getElementById('chatWrap');
+  const { cleanText } = extractHiddenRestaurantMeta(text);
   const { restaurants, others } = parseRestaurants(text);
 
   const row = document.createElement('div');
@@ -4768,7 +4785,7 @@ function appendBotBubbles(text) {
     }
     wrap.appendChild(group);
   } else {
-    const merged = (others.length ? others.join('\n\n') : text).trim();
+    const merged = (others.length ? others.join('\n\n') : cleanText).trim();
     const p = document.createElement('div');
     p.className = 'plain-bubble';
     p.innerHTML = merged.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
@@ -4834,7 +4851,13 @@ function hideTyping() {
 
 /* ── RESTAURANT PARSING ── */
 function parseRestaurants(text) {
-  const blocks = text.split(/(?=🍽️)/);
+  const { cleanText, metadata } = extractHiddenRestaurantMeta(text);
+  const metaByName = new Map();
+  metadata.forEach(item => {
+    const key = normalizeRestaurantMetaName(item && item.name);
+    if (key) metaByName.set(key, item);
+  });
+  const blocks = cleanText.split(/(?=🍽️)/);
   const restaurants = [], others = [];
   blocks.forEach(b => {
     b = b.trim(); if (!b) return;
@@ -4848,18 +4871,24 @@ function parseRestaurants(text) {
       const suitableReason = matchRestaurantField(b, ['适合你']);
       const warmRecommendation = matchRestaurantField(b, ['一句有温度的推荐语', '推荐语']);
       const reviewSignal = matchRestaurantField(b, ['小提醒']);
-      if (nm) restaurants.push({
-        name: nm[1].trim(),
-        rating: rt ? rt[1] : null,
-        ratingCount: rt && rt[2] ? rt[2].trim() : null,
-        address: ad ? ad[1].trim() : null,
-        hours: hr ? hr[1].trim() : null,
-        quote: qt ? qt[1].trim() : null,
-        suitableReason,
-        warmRecommendation,
-        reviewSignal,
-        mapUrl: lk ? lk[2] : null,
-      });
+      if (nm) {
+        const name = nm[1].trim();
+        const meta = metaByName.get(normalizeRestaurantMetaName(name)) || null;
+        restaurants.push({
+          name,
+          rating: rt ? rt[1] : null,
+          ratingCount: rt && rt[2] ? rt[2].trim() : null,
+          address: ad ? ad[1].trim() : null,
+          hours: hr ? hr[1].trim() : null,
+          quote: qt ? qt[1].trim() : null,
+          suitableReason,
+          warmRecommendation,
+          reviewSignal,
+          mapUrl: lk ? lk[2] : null,
+          lat: meta && Number.isFinite(Number(meta.lat)) ? Number(meta.lat) : null,
+          lng: meta && Number.isFinite(Number(meta.lng)) ? Number(meta.lng) : null,
+        });
+      }
     } else {
       others.push(b);
     }
@@ -4914,6 +4943,28 @@ function renderRestaurantReasoning(restaurant) {
     parts.push(`<div class="card-note"><span class="card-note-label">小提醒</span>${esc(restaurant.reviewSignal)}</div>`);
   }
   return parts.length ? `<div class="card-reasoning">${parts.join('')}</div>` : '';
+}
+
+function normalizeRestaurantMetaName(name) {
+  return String(name || '')
+    .replace(/\*\*/g, '')
+    .replace(/[“”"'`]/g, '')
+    .replace(/\s+/g, '')
+    .trim()
+    .toLowerCase();
+}
+
+function extractHiddenRestaurantMeta(text) {
+  const raw = String(text || '');
+  const match = raw.match(/<!--MSH_META\s*([\s\S]*?)\s*MSH_META-->/);
+  const cleanText = raw.replace(/<!--MSH_META[\s\S]*?MSH_META-->/g, '').trim();
+  if (!match) return { cleanText, metadata: [] };
+  try {
+    const parsed = JSON.parse(match[1].trim());
+    return { cleanText, metadata: Array.isArray(parsed) ? parsed : [] };
+  } catch {
+    return { cleanText, metadata: [] };
+  }
 }
 
 /* ── FAV POPOVER ── */
