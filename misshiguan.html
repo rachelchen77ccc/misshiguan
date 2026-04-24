@@ -607,6 +607,172 @@
     flex-wrap: wrap;
   }
 
+  .decide-filter-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 14px;
+    padding: 14px 14px 12px;
+    border: 1px solid rgba(229, 213, 201, 0.9);
+    border-radius: 14px;
+    background: rgba(255, 252, 247, 0.78);
+  }
+
+  .decide-filter-group {
+    min-width: 0;
+  }
+
+  .decide-filter-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    line-height: 1.2;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    opacity: 0.72;
+    margin-bottom: 8px;
+  }
+
+  .decide-filter-chips,
+  .decide-custom-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .decide-filter-chip,
+  .decide-custom-chip {
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+    color: var(--color-text-secondary);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
+  }
+
+  .decide-filter-chip:hover,
+  .decide-custom-chip:hover {
+    background: #FBF5EF;
+    border-color: #DFC8B7;
+    transform: translateY(-1px);
+  }
+
+  .decide-filter-chip.active {
+    background: #FFF1E8;
+    border-color: #E3B89B;
+    color: var(--color-accent);
+  }
+
+  .decide-wheel-summary {
+    margin-bottom: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1.65;
+    color: var(--color-text-secondary);
+  }
+
+  .decide-wheel-summary strong {
+    color: var(--color-text-main);
+    font-weight: 500;
+  }
+
+  .decide-custom-panel {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(229, 213, 201, 0.8);
+  }
+
+  .decide-custom-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .decide-custom-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    line-height: 1.25;
+    color: var(--color-text-main);
+    letter-spacing: -0.01em;
+  }
+
+  .decide-custom-sub {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+  }
+
+  .decide-custom-input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .decide-custom-input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.72);
+    color: var(--color-text-main);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    line-height: 1.2;
+    padding: 10px 14px;
+    outline: none;
+  }
+
+  .decide-custom-input:focus {
+    border-color: #E3B89B;
+    box-shadow: 0 0 0 3px rgba(227, 184, 155, 0.14);
+  }
+
+  .decide-custom-add {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .decide-custom-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding-right: 9px;
+  }
+
+  .decide-custom-remove {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(196, 98, 45, 0.1);
+    color: var(--color-accent);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .decide-custom-empty {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+    opacity: 0.72;
+  }
+
   .chips {
     display: flex;
     flex-wrap: wrap;
@@ -1128,6 +1294,7 @@
     .home-entry-grid { grid-template-columns: 1fr; max-width: 460px; }
     .decide-wheel-wrap { width: 236px; height: 236px; }
     .decide-wheel-seg { transform: rotate(var(--a)) translateY(-96px) rotate(calc(-1 * var(--a))); }
+    .decide-custom-head { flex-direction: column; align-items: flex-start; gap: 4px; }
   }
 
   @media (max-width: 480px) {
@@ -1153,6 +1320,9 @@
 
     .card-story { font-size: 15px; }
     .card-suitable { padding: 10px 11px; }
+    .decide-filter-panel { padding: 12px; }
+    .decide-custom-input-row { flex-direction: column; }
+    .decide-custom-add { width: 100%; justify-content: center; }
 
     /* Chat wrap: less top breathing room on small screens */
     .chat-wrap { padding-top: 20px; }
@@ -1849,6 +2019,7 @@
   @media (max-width: 900px) {
     textarea { font-size: 16px; }
     .fav-new-input { font-size: 16px; }
+    .decide-custom-input { font-size: 16px; }
   }
 
   /* ── TOUCH DEVICES: fav button always visible ── */
@@ -2007,20 +2178,40 @@ let favRenameDraft = '';
 
 const RECOMMEND_PLACEHOLDER = '例如：帮我找广州珠江新城适合约会的粤菜…';
 const DECIDE_PLACEHOLDER = '例如：帮我决定今天吃什么，想吃便宜又热乎的…';
+const DECIDE_CUSTOM_OPTIONS_KEY = 'misshiguan_custom_wheel_options_v1';
 const RECOMMEND_WELCOME_CHIPS = [
   '上海外滩高档餐厅',
   '北京三里屯咖啡厅',
   '成都平价川菜',
   'Berlin brunch spots'
 ];
-const DECIDE_CHIPS = [
-  '想吃热乎的',
-  '想吃便宜点',
-  '想吃开心一点',
-  '想吃清淡点',
-  '想吃有氛围的',
-  '完全随机'
+const DECIDE_FILTER_GROUPS = [
+  { key: 'mealType', label: '这一顿是？', fallback: '随便', options: ['早餐', 'brunch', '午餐', '下午茶', '晚餐', '夜宵', '随便'] },
+  { key: 'mood', label: '今天想吃什么感觉？', fallback: '随便', options: ['清淡', '重口', '热乎', '便宜', '精致一点', '随便'] },
+  { key: 'scene', label: '场景是？', fallback: '不确定', options: ['一个人', '和朋友', '约会', '赶时间', '不确定'] }
 ];
+const DECIDE_MEAL_OPTION_MAP = {
+  '早餐': ['粥', '包子', '咖啡', '三明治', '面包', 'brunch'],
+  'brunch': ['brunch', '咖啡', '轻食', '蛋料理', '三明治', '甜点'],
+  '午餐': ['中餐', '日料', '越南粉', '盖饭', '面', '轻食'],
+  '下午茶': ['咖啡', '甜点', '奶茶', '蛋糕', '面包', '冰淇淋'],
+  '晚餐': ['火锅', '川菜', '日料', '韩餐', '意面', '烧烤'],
+  '夜宵': ['拉面', '炸鸡', '烧烤', '麻辣烫', '汉堡', '便利店热食']
+};
+const DECIDE_MOOD_OPTION_MAP = {
+  '清淡': ['轻食', '粥', '越南粉', '日料', '汤面'],
+  '重口': ['川菜', '火锅', '烧烤', '麻辣烫', '韩餐'],
+  '热乎': ['面', '汤粉', '火锅', '粥', '拉面'],
+  '便宜': ['盖饭', '面', '快餐', '包子', '便利店热食'],
+  '精致一点': ['brunch', '日料', '意面', 'bistro', '甜点']
+};
+const DECIDE_SCENE_OPTION_MAP = {
+  '一个人': ['拉面', '盖饭', '面', '轻食', '快餐'],
+  '和朋友': ['火锅', '烧烤', '韩餐', '川菜', '披萨'],
+  '约会': ['bistro', '意面', '日料', 'brunch', '甜点'],
+  '赶时间': ['快餐', '三明治', '盖饭', '面', '咖啡']
+};
+const DECIDE_GENERAL_FILLERS = ['中餐', '日料', '拉面', '轻食', '火锅', '咖啡', '盖饭', '甜点', '面', '三明治', '烧烤', '意面'];
 const DECIDE_MAJOR_CUISINES = ['中餐', '日料', '韩餐', '法餐', '意餐', '东南亚菜', '南亚菜', '地中海菜', '美式', '墨西哥菜'];
 const DECIDE_CHINESE_REGIONAL = ['云南菜', '贵州菜', '川菜', '湘菜', '粤菜', '江浙菜', '东北菜', '西北菜', '潮汕菜', '客家菜', '新疆菜'];
 const DECIDE_FORMAT_TYPES = ['火锅', '烧烤', '面食', '饺子', '盖饭', 'brunch', '快餐', '素食', '小酒馆', '汤面', '日式定食', '烤肉'];
@@ -2033,6 +2224,8 @@ let decideWheelRotation = 0;
 let decideWheelHighlight = -1;
 let decideWheelSpinning = false;
 let decideWheelTimer = null;
+let decideSelections = { mealType: '随便', mood: '随便', scene: '不确定' };
+let decideCustomOptions = loadCustomWheelOptions();
 let pendingApiPromptOverride = null;
 let pendingApiTask = null;
 let geoStatus = 'idle'; // 'idle' | 'requesting' | 'ready' | 'denied' | 'error'
@@ -2085,6 +2278,28 @@ function buildDecideDecisionPool() {
 const DECIDE_DECISION_POOL = buildDecideDecisionPool();
 
 /* ── FAVORITES HELPERS ── */
+function loadCustomWheelOptions() {
+  try {
+    const raw = localStorage.getItem(DECIDE_CUSTOM_OPTIONS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed)
+      ? parsed.map(normalizeCustomWheelOption).filter(Boolean).slice(0, 18)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCustomWheelOptions(options) {
+  try { localStorage.setItem(DECIDE_CUSTOM_OPTIONS_KEY, JSON.stringify(options)); } catch {}
+}
+
+function normalizeCustomWheelOption(value) {
+  const cleaned = String(value || '').replace(/\s+/g, ' ').trim();
+  if (!cleaned) return '';
+  return cleaned.slice(0, 16);
+}
+
 function loadFavs() {
   try { const r = localStorage.getItem(FAVS_KEY); return r ? JSON.parse(r) : {}; } catch { return {}; }
 }
@@ -2319,6 +2534,15 @@ function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function shuffleArray(arr) {
+  const copied = [...arr];
+  for (let i = copied.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copied[i], copied[j]] = [copied[j], copied[i]];
+  }
+  return copied;
+}
+
 function pickNoRepeatDecision(candidates) {
   const source = candidates.length > 0 ? candidates : DECIDE_DECISION_POOL;
   const fresh = source.filter(item => !decideRecentResultIds.includes(item.id));
@@ -2328,7 +2552,60 @@ function pickNoRepeatDecision(candidates) {
   return chosen;
 }
 
+function hasGuidedDecideSelection() {
+  return decideSelections.mealType !== '随便' || decideSelections.mood !== '随便' || decideSelections.scene !== '不确定';
+}
+
+function buildGuidedWheelEntries() {
+  const hasSelection = hasGuidedDecideSelection();
+  const custom = decideCustomOptions.map(normalizeCustomWheelOption).filter(Boolean);
+  if (!hasSelection && custom.length === 0) return null;
+
+  const weighted = new Map();
+  const order = [];
+  const addMany = (items, weight) => {
+    (items || []).forEach(item => {
+      const key = normalizeCustomWheelOption(item);
+      if (!key) return;
+      if (!weighted.has(key)) order.push(key);
+      weighted.set(key, (weighted.get(key) || 0) + weight);
+    });
+  };
+
+  addMany(DECIDE_MEAL_OPTION_MAP[decideSelections.mealType], 3);
+  addMany(DECIDE_MOOD_OPTION_MAP[decideSelections.mood], 2);
+  addMany(DECIDE_SCENE_OPTION_MAP[decideSelections.scene], 2);
+  addMany(custom, 4);
+
+  const fallbackPool = [
+    ...custom,
+    ...(DECIDE_MEAL_OPTION_MAP[decideSelections.mealType] || []),
+    ...(DECIDE_MOOD_OPTION_MAP[decideSelections.mood] || []),
+    ...(DECIDE_SCENE_OPTION_MAP[decideSelections.scene] || []),
+    ...DECIDE_GENERAL_FILLERS
+  ].map(normalizeCustomWheelOption).filter(Boolean);
+
+  const ranked = order
+    .sort((a, b) => {
+      const diff = (weighted.get(b) || 0) - (weighted.get(a) || 0);
+      return diff !== 0 ? diff : Math.random() - 0.5;
+    });
+  const targetCount = Math.min(8, Math.max(6, Math.max(ranked.length, custom.length ? 6 : 0)));
+  const picked = ranked.slice(0, targetCount);
+
+  shuffleArray(fallbackPool).forEach(item => {
+    if (picked.length >= targetCount) return;
+    if (!picked.includes(item)) picked.push(item);
+  });
+
+  return shuffleArray(picked.slice(0, 8)).map(direction => (
+    createDecideEntry(`今天签到了：${direction}`, direction, ['guided'])
+  ));
+}
+
 function createWheelOptions() {
+  const guided = buildGuidedWheelEntries();
+  if (guided && guided.length > 0) return guided;
   const copied = [...DECIDE_DECISION_POOL];
   copied.sort(() => Math.random() - 0.5);
   return copied.slice(0, 8);
@@ -2353,6 +2630,38 @@ function resetDecideStarter() {
   decideWheelOptions = createWheelOptions();
 }
 
+function updateDecideWheelFromCurrentState(options = {}) {
+  clearDecideWheelTimer();
+  decideWheelSpinning = false;
+  decideWheelOptions = createWheelOptions();
+  decideWheelHighlight = -1;
+  if (options.resetRotation !== false) decideWheelRotation = 0;
+  if (!options.keepResult) decideResult = null;
+}
+
+function setDecideSelection(key, value) {
+  if (!Object.prototype.hasOwnProperty.call(decideSelections, key)) return;
+  decideSelections[key] = value;
+  updateDecideWheelFromCurrentState();
+  if (currentView === 'chat' && decideStarterActive) renderMessages();
+}
+
+function addCustomDecideOption(value) {
+  const normalized = normalizeCustomWheelOption(value);
+  if (!normalized) return false;
+  if (decideCustomOptions.includes(normalized)) return false;
+  decideCustomOptions = [...decideCustomOptions, normalized].slice(0, 18);
+  saveCustomWheelOptions(decideCustomOptions);
+  updateDecideWheelFromCurrentState();
+  return true;
+}
+
+function removeCustomDecideOption(value) {
+  decideCustomOptions = decideCustomOptions.filter(item => item !== value);
+  saveCustomWheelOptions(decideCustomOptions);
+  updateDecideWheelFromCurrentState();
+}
+
 function filterDecidePoolByLabel(label) {
   const tagMap = {
     '想吃热乎的': ['hot', 'comfort'],
@@ -2366,22 +2675,41 @@ function filterDecidePoolByLabel(label) {
   return candidates.length > 0 ? candidates : DECIDE_DECISION_POOL;
 }
 
-function buildDecideResult(label, fixedEntry) {
-  const noteMap = {
-    '想吃热乎的': '给你挑了个更暖胃的方向。',
-    '想吃便宜点': '给你偏向预算友好的选择。',
-    '想吃开心一点': '给你偏热闹、有满足感的吃法。',
-    '想吃清淡点': '给你偏轻盈、没负担的方向。',
-    '想吃有氛围的': '给你偏氛围感更好的方向。',
-    '完全随机': '这次就交给命运签。',
-  };
-  const picked = fixedEntry || pickNoRepeatDecision(label === '完全随机' ? DECIDE_DECISION_POOL : filterDecidePoolByLabel(label));
+function buildDecideResultReason(direction) {
+  const meal = decideSelections.mealType;
+  const mood = decideSelections.mood;
+  const scene = decideSelections.scene;
+  const dir = String(direction || '');
+
+  if (meal === '夜宵' && /(拉面|麻辣烫|烧烤|汤粉|面|便利店热食)/.test(dir)) return '适合深夜吃点热乎的，不用想太多也能立刻被安慰到。';
+  if (meal === '下午茶' && /(咖啡|甜点|蛋糕|冰淇淋|奶茶)/.test(dir)) return '适合把这一顿留给一点轻松和甜味，刚好当作今天的小奖励。';
+  if (meal === '早餐' && /(粥|包子|面包|三明治|咖啡)/.test(dir)) return '适合把这一天温柔地开个头，轻一点也更容易做决定。';
+  if (scene === '赶时间' && /(快餐|盖饭|三明治|咖啡|面)/.test(dir)) return '适合快速解决一顿，不耽误节奏，也不容易踩空。';
+  if (scene === '约会' && /(bistro|意面|日料|brunch|甜点)/i.test(dir)) return '适合慢慢吃一顿，气氛和分寸都比较在线。';
+  if (scene === '和朋友' && /(火锅|烧烤|韩餐|川菜|披萨)/.test(dir)) return '适合边吃边聊，热闹感和分享感都会更到位。';
+  if (scene === '一个人' && /(拉面|盖饭|面|轻食|快餐)/.test(dir)) return '适合一个人稳稳吃完，不用纠结，也不会有压力。';
+  if (mood === '热乎' && /(火锅|面|拉面|粥|汤粉|麻辣烫)/.test(dir)) return '适合现在这种想吃点热乎、让人缓一口气的时候。';
+  if (mood === '便宜' && /(盖饭|面|快餐|包子|便利店热食)/.test(dir)) return '适合预算友好地解决这一顿，省心也很稳。';
+  if (mood === '精致一点' && /(brunch|日料|意面|bistro|甜点)/i.test(dir)) return '适合把这顿吃得讲究一点，仪式感会刚刚好。';
+  if (mood === '清淡' && /(轻食|粥|越南粉|日料|汤面)/.test(dir)) return '适合今天想吃得轻一点，胃口和状态都能被照顾到。';
+  if (mood === '重口' && /(川菜|火锅|烧烤|麻辣烫|韩餐)/.test(dir)) return '适合来点更有存在感的味道，一口下去比较容易满足。';
+
+  const parts = [];
+  if (meal !== '随便') parts.push(`${meal}这顿`);
+  if (scene !== '不确定') parts.push(scene === '赶时间' ? '赶一点时间' : scene);
+  if (mood !== '随便') parts.push(`想吃${mood}`);
+  if (parts.length > 0) return `适合现在这种${parts.join('、')}的时候，选它会更容易下决定。`;
+  return '适合现在这种不想继续纠结的时候，顺着这张签去吃通常不会太错。';
+}
+
+function buildDecideResult(source, fixedEntry) {
+  const picked = fixedEntry || pickNoRepeatDecision(source === 'default' ? DECIDE_DECISION_POOL : decideWheelOptions);
   return {
     id: picked.id,
-    source: label,
-    text: picked.text,
+    source,
+    text: `今天签到了：${picked.direction}`,
     direction: picked.direction,
-    note: noteMap[label] || '先定一个方向，再继续找店。'
+    note: buildDecideResultReason(picked.direction)
   };
 }
 
@@ -2553,7 +2881,14 @@ function prefillManualCityPromptByDecide(result) {
 
 function chooseDecideChip(label) {
   if (label === '完全随机') return;
-  decideResult = buildDecideResult(label);
+  const picked = pickNoRepeatDecision(filterDecidePoolByLabel(label));
+  decideResult = {
+    id: picked.id,
+    source: 'chip',
+    text: `今天签到了：${picked.direction}`,
+    direction: picked.direction,
+    note: buildDecideResultReason(picked.direction)
+  };
   decideWheelHighlight = -1;
   if (currentView === 'chat' && decideStarterActive) renderMessages();
 }
@@ -2580,7 +2915,7 @@ function runDecideWheel(welcomeEl) {
     decideWheelSpinning = false;
     decideWheelRotation = targetRotation;
     decideWheelHighlight = idx;
-    decideResult = buildDecideResult('完全随机', picked);
+    decideResult = buildDecideResult('wheel', picked);
     renderMessages();
   }, 1550);
 }
@@ -2875,13 +3210,34 @@ function renderMessages() {
       ? '先决定今天吃什么方向，再进入找店。'
       : '告诉我城市、预算或场景，我来帮你筛出更合适的餐厅。';
     const chips = currentMode === 'decide'
-      ? DECIDE_CHIPS
-          .map(label => `<span class="chip" data-decide="${esc(label)}">${esc(label)}</span>`)
-          .join('')
+      ? ''
       : `<span class="chip chip-geo${geoStatus === 'requesting' ? ' is-loading' : ''}" data-geo-action="locate">${geoStatus === 'requesting' ? '📍 正在获取位置…' : '📍 使用当前位置'}</span>
          ${RECOMMEND_WELCOME_CHIPS
           .map(label => `<span class="chip" data-suggest="${esc(label)}">${esc(label)}</span>`)
           .join('')}`;
+    const decideSummaryBits = [];
+    if (decideSelections.mealType !== '随便') decideSummaryBits.push(decideSelections.mealType);
+    if (decideSelections.mood !== '随便') decideSummaryBits.push(decideSelections.mood);
+    if (decideSelections.scene !== '不确定') decideSummaryBits.push(decideSelections.scene);
+    if (decideCustomOptions.length > 0) decideSummaryBits.push(`自定义 ${decideCustomOptions.length} 项`);
+    const decideSummaryText = decideSummaryBits.length > 0
+      ? `这一盘会优先按 <strong>${esc(decideSummaryBits.join(' · '))}</strong> 来生成，再从里面挑 6-8 个方向。`
+      : '还没筛条件的话，就先按当前默认命运签来一盘；你也可以加一点自己的偏爱。';
+    const decideFiltersHtml = DECIDE_FILTER_GROUPS.map(group => `
+      <div class="decide-filter-group">
+        <div class="decide-filter-label">${group.label}</div>
+        <div class="decide-filter-chips">
+          ${group.options.map(option => `
+            <button
+              type="button"
+              class="decide-filter-chip${decideSelections[group.key] === option ? ' active' : ''}"
+              data-decide-filter="${group.key}"
+              data-decide-value="${esc(option)}"
+            >${esc(option)}</button>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
     const wheelSegments = currentMode === 'decide'
       ? decideWheelOptions.map((item, i) => {
           const angle = (360 / decideWheelOptions.length) * i;
@@ -2892,7 +3248,11 @@ function renderMessages() {
     const decideWheelHtml = currentMode === 'decide' ? `
       <div class="decide-wheel-card">
         <div class="decide-wheel-head">命运签 · 今天吃什么</div>
-        <div class="decide-wheel-sub">点“开始抽签”会转一轮，再揭晓一个方向。</div>
+        <div class="decide-wheel-sub">先轻轻筛一下，再让命运签替你把范围收窄一点。</div>
+        <div class="decide-filter-panel">
+          ${decideFiltersHtml}
+        </div>
+        <div class="decide-wheel-summary">${decideSummaryText}</div>
         <div class="decide-wheel-wrap">
           <div class="decide-wheel-pointer"></div>
           <div class="decide-wheel${decideWheelSpinning ? ' spinning' : ''}" style="transform: rotate(${decideWheelRotation}deg);">
@@ -2903,6 +3263,26 @@ function renderMessages() {
         <div class="decide-wheel-controls">
           <button class="decide-cta-btn" data-decide-action="spin" ${decideWheelSpinning ? 'disabled' : ''}>${decideWheelSpinning ? '抽签中…' : '开始抽签'}</button>
           <button class="decide-ghost-btn" data-decide-action="refresh-wheel" ${decideWheelSpinning ? 'disabled' : ''}>换一盘选项</button>
+        </div>
+        <div class="decide-custom-panel">
+          <div class="decide-custom-head">
+            <div class="decide-custom-title">加点你自己的选择</div>
+            <div class="decide-custom-sub">像云南菜、螺蛳粉、寿司这种，也可以一起放进签里。</div>
+          </div>
+          <div class="decide-custom-input-row">
+            <input class="decide-custom-input" id="decideCustomInput" type="text" maxlength="16" placeholder="输入一个你想加进去的选项">
+            <button class="decide-cta-btn decide-custom-add" type="button" data-decide-action="add-custom">添加</button>
+          </div>
+          <div class="decide-custom-list">
+            ${decideCustomOptions.length > 0
+              ? decideCustomOptions.map(option => `
+                <span class="decide-custom-chip">
+                  <span>${esc(option)}</span>
+                  <button type="button" class="decide-custom-remove" aria-label="删除 ${esc(option)}" data-decide-remove-custom="${esc(option)}">×</button>
+                </span>
+              `).join('')
+              : '<div class="decide-custom-empty">暂时还没加私藏选项，先用上面的筛选也可以。</div>'}
+          </div>
         </div>
       </div>
     ` : '';
@@ -2917,7 +3297,7 @@ function renderMessages() {
           : '还没有位置信息。可先用当前位置找店，或手动输入其他城市。');
     const decideResultHtml = currentMode === 'decide' && decideResult ? `
       <div class="decide-result-card">
-        <div class="decide-result-eyebrow">今天适合吃</div>
+        <div class="decide-result-eyebrow">命运签结果</div>
         <div class="decide-result-title">${esc(decideResult.text)}</div>
         <div class="decide-result-direction">方向：${esc(decideResult.direction)}</div>
         <div class="decide-result-sub">${esc(decideResult.note)} ${esc(decideFlowHint)}</div>
@@ -2944,36 +3324,59 @@ function renderMessages() {
       <p class="welcome-mode-sub">${modeSub}</p>
       ${decideWheelHtml}
       ${decideResultHtml}
-      <div class="chips">${chips}</div>
+      ${chips ? `<div class="chips">${chips}</div>` : ''}
     `;
     welcome.querySelectorAll('[data-mode-card]').forEach(card => {
       card.addEventListener('click', () => setAppMode(card.dataset.modeCard));
     });
     welcome.querySelectorAll('.chip').forEach(chip => {
-      if (chip.dataset.decide) {
-        chip.addEventListener('click', () => {
-          if (chip.dataset.decide === '完全随机') {
-            runDecideWheel(welcome);
-          } else {
-            chooseDecideChip(chip.dataset.decide);
-          }
-        });
-      } else if (chip.dataset.suggest) {
+      if (chip.dataset.suggest) {
         chip.addEventListener('click', () => suggest(chip.dataset.suggest));
       }
     });
     welcome.querySelectorAll('[data-geo-action="locate"]').forEach(btn => {
       btn.addEventListener('click', requestGeolocation);
     });
+    welcome.querySelectorAll('[data-decide-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (decideWheelSpinning) return;
+        setDecideSelection(btn.dataset.decideFilter, btn.dataset.decideValue);
+      });
+    });
+    const decideCustomInput = welcome.querySelector('#decideCustomInput');
+    const submitCustomOption = () => {
+      if (!decideCustomInput) return;
+      const added = addCustomDecideOption(decideCustomInput.value);
+      if (added) {
+        decideCustomInput.value = '';
+        if (currentView === 'chat' && decideStarterActive) renderMessages();
+      }
+    };
+    if (decideCustomInput) {
+      decideCustomInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          submitCustomOption();
+        }
+      });
+    }
+    welcome.querySelectorAll('[data-decide-remove-custom]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (decideWheelSpinning) return;
+        removeCustomDecideOption(btn.dataset.decideRemoveCustom);
+        if (currentView === 'chat' && decideStarterActive) renderMessages();
+      });
+    });
     welcome.querySelectorAll('[data-decide-action]').forEach(btn => {
       if (btn.dataset.decideAction === 'spin') {
         btn.addEventListener('click', () => runDecideWheel(welcome));
       }
+      if (btn.dataset.decideAction === 'add-custom') {
+        btn.addEventListener('click', submitCustomOption);
+      }
       if (btn.dataset.decideAction === 'refresh-wheel') {
         btn.addEventListener('click', () => {
-          decideWheelOptions = createWheelOptions();
-          decideWheelHighlight = -1;
-          decideWheelRotation = 0;
+          updateDecideWheelFromCurrentState();
           renderMessages();
         });
       }
@@ -3022,13 +3425,7 @@ function renderMessages() {
         });
       }
       if (btn.dataset.decideAction === 'reroll') {
-        btn.addEventListener('click', () => {
-          if (decideResult && decideResult.source && decideResult.source !== '完全随机') {
-            chooseDecideChip(decideResult.source);
-          } else {
-            runDecideWheel(welcome);
-          }
-        });
+        btn.addEventListener('click', () => runDecideWheel(welcome));
       }
     });
     c.appendChild(welcome);
