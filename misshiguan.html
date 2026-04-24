@@ -2955,6 +2955,7 @@ const RECOMMEND_PLACEHOLDER = '例如：帮我找广州珠江新城适合约会�
 const DECIDE_PLACEHOLDER = '例如：帮我决定今天吃什么，想吃便宜又热乎的…';
 const DECIDE_CUSTOM_OPTIONS_KEY = 'misshiguan_custom_wheel_options_v1';
 const COLLECTION_META_KEY = 'misshiguan_collection_meta_v1';
+const GOOGLE_MAPS_BROWSER_KEY = "AIzaSyBlscluRE0GgDDpdjNWpLQNmLCR2T4Ch9M";
 const RECOMMEND_WELCOME_CHIPS = [
   '上海外滩高档餐厅',
   '北京三里屯咖啡厅',
@@ -3401,6 +3402,7 @@ function getCityMapLayout(groups) {
 
 function getGoogleMapsFrontendKey() {
   try {
+    if (GOOGLE_MAPS_BROWSER_KEY && !GOOGLE_MAPS_BROWSER_KEY.includes('__PASTE_')) return GOOGLE_MAPS_BROWSER_KEY;
     if (window.MISSHIGUAN_GOOGLE_MAPS_API_KEY) return window.MISSHIGUAN_GOOGLE_MAPS_API_KEY;
     if (window.GOOGLE_MAPS_API_KEY) return window.GOOGLE_MAPS_API_KEY;
     if (window.__GOOGLE_MAPS_API_KEY__) return window.__GOOGLE_MAPS_API_KEY__;
