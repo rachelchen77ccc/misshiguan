@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>觅食官 · Demo</title>
+<title>觅食官 · 美食探店助手</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root {
     --logo-size:              31px;
@@ -2573,34 +2574,6 @@
     }
   }
 </style>
-  /* ── DEMO MODE BADGE ── */
-  .demo-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--color-text-secondary);
-    border: 1px solid var(--color-border);
-    border-radius: 999px;
-    padding: 4px 10px;
-    opacity: 0.55;
-    margin-left: auto;
-    flex-shrink: 0;
-  }
-  .demo-badge::before {
-    content: '';
-    display: inline-block;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: #C4622D;
-    opacity: 0.6;
-  }
-</style>
 </head>
 <body>
 
@@ -2631,19 +2604,25 @@
       <div class="logo-name">觅食官</div>
       <div class="logo-sep"></div>
       <div class="logo-sub">Find good food, anywhere</div>
-      <span class="demo-badge">Demo Mode</span>
+      <div class="logo-dot"></div>
     </header>
 
     <div class="chat-wrap" id="chatWrap"></div>
+    <div class="fav-view" id="favView"></div>
 
     <div class="input-bar" id="inputBar">
+      <div class="mode-switch" id="modeSwitch">
+        <button class="mode-switch-btn active" data-mode="recommend">推荐餐厅</button>
+        <button class="mode-switch-btn" data-mode="decide">今天吃什么</button>
+      </div>
       <div class="input-inner">
-        <textarea id="inp" placeholder="试试：Berlin solo ramen · Paris date bistro · London casual dinner…" rows="1"></textarea>
+        <textarea id="inp" placeholder="例如：帮我找 Berlin Mitte 适合约会的 bistro…" rows="1"></textarea>
         <button class="send-btn" id="btn">
           <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
       </div>
-      <p class="foot-note">Demo · 数据为演示用途</p>
+      <div class="geo-hint" id="geoHint" aria-live="polite"></div>
+      <p class="foot-note">数据来源 Google Places · 实时检索结果 · 仅供参考</p>
     </div>
 
   </div>
@@ -2651,7 +2630,7 @@
 
 <div class="fav-overlay" id="favOverlay">
   <div class="fav-panel" id="favPanel">
-    <button class="fav-panel-close" id="favPanelClose" aria-label="关闭">×</button>
+    <button class="fav-panel-close" id="favPanelClose" aria-label="关闭收藏弹层">×</button>
     <div class="fav-panel-title">保存到合集</div>
     <div class="fav-panel-sub" id="favPanelSub"></div>
     <div class="fav-collections-list" id="favCollsList"></div>
@@ -2662,272 +2641,360 @@
   </div>
 </div>
 
+<div class="share-overlay" id="shareOverlay">
+  <div class="share-panel" id="sharePanel">
+    <div class="share-panel-title">分享这份推荐</div>
+    <div class="share-panel-sub">选择想放进图片里的餐厅</div>
+    <div class="share-rest-list" id="shareRestList"></div>
+    <div class="share-panel-actions">
+      <button class="share-cancel-btn" id="shareCancelBtn">取消</button>
+      <button class="share-confirm-btn" id="shareConfirmBtn">生成图片</button>
+    </div>
+  </div>
+</div>
+
 <script>
-/* ── DEMO MOCK DATA ── */
-const MOCK_RESPONSES = {
-  berlin: `🍽️ **Cocolo Ramen Mitte**
-⭐ 4.6（1842条评价）
-📍 Karl-Liebknecht-Str. 9, 10178 Berlin Mitte
-🕐 周一至周日 11:30–22:30
-
-适合你：
-吧台座位多，一个人进来不会尴尬，专注感强
-
-推荐语：
-在柏林能喝到这种浓度的博多豚骨很难得。下午两三点的低峰期进去，一碗叉烧拉面配半熟蛋，窗外是柏林的日常街景，适合自己发呆。
-
-小提醒：
-周末晚高峰排队约 20 分钟，不接受预订。叉烧分量比日本本土小一点，但价格在柏林属于实在（12–15€）。
-
-[查看地图](https://www.google.com/maps/search/Cocolo+Ramen+Berlin)
-
-🍽️ **Noodle Kitchen Berlin**
-⭐ 4.4（763条评价）
-📍 Skalitzer Str. 27, 10999 Berlin Kreuzberg
-🕐 周二至周日 12:00–22:00
-
-适合你：
-Kreuzberg 氛围随性，一个人坐进去不用解释什么
-
-推荐语：
-拉面汤底比正统日式清淡一点，但配合柏林的口味做了微调。麻辣版本意外地地道，灯光昏黄，背景音乐是 city pop。点一碗坐两小时也不会有人催。
-
-小提醒：
-周一休息。晚上七八点后座位紧张，建议提前到。现金和刷卡都可以。
-
-[查看地图](https://www.google.com/maps/search/Noodle+Kitchen+Berlin)
-
-🍽️ **Takumi Berlin Mitte**
-⭐ 4.5（408条评价）
-📍 Torstraße 61, 10119 Berlin Mitte
-🕐 周四至周日 12:00–21:00（售完即止）
-
-适合你：
-如果你对拉面有执念，这里是柏林最认真的汤底
-
-推荐语：
-汤头每天现熬，老板是日本人，一个人进来会主动安排在吧台最好的位置。碗偏小但精致，适合吃完还想再来一碗的心情。
-
-小提醒：
-仅周四至周日营业，建议 12 点左右去。太晚可能售完，不预订。
-
-[查看地图](https://www.google.com/maps/search/Takumi+Berlin)`,
-
-  paris: `🍽️ **Le Baratin**
-⭐ 4.7（1103条评价）
-📍 3 Rue Jouye-Rouve, 75020 Paris Belleville
-🕐 周二至周六 12:00–14:30, 19:00–22:30
-
-适合你：
-真正的巴黎老派情调，不做作，适合有话聊的约会
-
-推荐语：
-Belleville 山丘上的老派酒馆，铁皮吊灯、黑板菜单、小圆桌。主厨是个阿根廷女人，菜单每天写在黑板上。来这里的人都是老客，但陌生人也会被善待。两个人点一瓶自然酒，可以聊到打烊。
-
-小提醒：
-必须提前预订，热门夜晚提前一周也可能满。周日周一不开。价位中等偏上（人均 50€+）。
-
-[查看地图](https://www.google.com/maps/search/Le+Baratin+Paris)
-
-🍽️ **Septime**
-⭐ 4.8（2241条评价）
-📍 80 Rue de Charonne, 75011 Paris
-🕐 周一至周五 12:15–14:00, 19:30–21:30
-
-适合你：
-如果这次约会想留下深刻印象，这是 Paris 最值得的一餐
-
-推荐语：
-巴黎最难订的餐厅之一，但真的值得。菜单是当天采购的食材决定，厨师会来桌边简单介绍。空间安静，两个人之间的对话不会被打扰。
-
-小提醒：
-提前至少三周在官网预订，周五晚更难。价位较高（人均 80–120€），在这个水准完全值。
-
-[查看地图](https://www.google.com/maps/search/Septime+Paris)
-
-🍽️ **Bistrot Paul Bert**
-⭐ 4.6（988条评价）
-📍 18 Rue Paul Bert, 75011 Paris
-🕐 周二至周六 12:00–14:00, 19:30–23:00
-
-适合你：
-不想太正式，但希望有真正的巴黎餐厅氛围
-
-推荐语：
-红色地铁椅、大镜子、法式鸭胸和焦糖布丁。服务员带着那种巴黎式的冷淡，但偶尔会开个玩笑。你不会在这里被 rush，一顿饭可以吃两小时。
-
-小提醒：
-提前 1–2 天预订通常够。价位中等（人均 40–60€），steak-frites 是招牌。
-
-[查看地图](https://www.google.com/maps/search/Bistrot+Paul+Bert+Paris)`,
-
-  london: `🍽️ **Padella**
-⭐ 4.7（3821条评价）
-📍 6 Southwark St, London SE1 1TQ Borough Market
-🕐 周一至周六 12:00–15:45, 17:30–22:00
-
-适合你：
-随意、好吃、不贵，Borough Market 附近完美的落脚点
-
-推荐语：
-不接受预订，但队伍移动很快。手工意面，pappardelle 配八小时炖牛肉，是 London 排队最值得的那种餐厅。座位紧凑，和邻桌离得很近，但氛围很活，不会觉得尴尬。
-
-小提醒：
-周末下午五点半刚开门时等待最短。带现金备用。人均 20–30£，物超所值。
-
-[查看地图](https://www.google.com/maps/search/Padella+London)
-
-🍽️ **Bao Soho**
-⭐ 4.5（2109条评价）
-📍 53 Lexington St, London W1F 9AS Soho
-🕐 周一至周六 12:00–15:00, 17:30–22:30
-
-适合你：
-轻松随意，想吃点不一样的，不用费心挑菜
-
-推荐语：
-台湾风格的 bao 在 Soho 有了自己的个性。经典猪肉 bao 配炸鸡，点三四样小食，一顿饭有层次。店内设计很有质感，坐在吧台看厨师工作也很好玩。
-
-小提醒：
-不接受预订，建议 5:30 开门前 10 分钟到。Soho 周末特别忙，提前去或接受排队。
-
-[查看地图](https://www.google.com/maps/search/Bao+Soho+London)
-
-🍽️ **Kiln**
-⭐ 4.6（1547条评价）
-📍 58 Brewer St, London W1F 9TL Soho
-🕐 周一至周六 12:00–14:30, 17:30–22:30
-
-适合你：
-吃腻了普通 Thai，想要真的有烟火气的那种
-
-推荐语：
-全部在开放式烧烤台上现做，坐吧台看厨师用柴火烹饪是体验的一部分。猪颈肉配 nam jim、clam with chili jam，每道菜都有点野。适合享受吃本身。
-
-小提醒：
-不预订。高峰期等位约 30 分钟，留名后可以在 Soho 附近逛一逛。人均 30–40£。
-
-[查看地图](https://www.google.com/maps/search/Kiln+London+Soho)`,
-
-  munich: `🍽️ **Tian München**
-⭐ 4.6（1231条评价）
-📍 Frauenstr. 4, 80469 München
-🕐 周二至周日 18:00–22:30
-
-适合你：
-如果你想让一顿素食晚餐有正式感，这是 Munich 最对的选择
-
-推荐语：
-这座城市最认真的素食餐厅。菜单完全随季节变化，摆盘接近 fine dining 的标准，但价格没有贵到离谱。对素食抱有偏见的人吃完之后通常会沉默一会。
-
-小提醒：
-建议提前预订，周末晚上很紧张。提供套餐（4–6 道，50–80€）和单点，可提前告知是否纯素。
-
-[查看地图](https://www.google.com/maps/search/Tian+München)
-
-🍽️ **Max Pett**
-⭐ 4.5（872条评价）
-📍 Pettenkoferstr. 8, 80336 München
-🕐 周一至周六 11:30–22:00
-
-适合你：
-不想正式，只想吃一顿好吃的素食晚饭，不费脑
-
-推荐语：
-慕尼黑老牌素食餐厅，菜单很宽，汉堡、亚洲菜、德式料理都有素食版本。价格实在（人均 15–25€）。seitan schnitzel 是招牌，可以先点这个。
-
-小提醒：
-无需预订，随走随坐。全素（vegan）可以直接告诉服务员，他们会圈出菜单。
-
-[查看地图](https://www.google.com/maps/search/Max+Pett+München)
-
-🍽️ **Bodhi München**
-⭐ 4.4（634条评价）
-📍 Lindwurmstr. 33, 80337 München
-🕐 周一至周六 11:00–21:30
-
-适合你：
-想吃亚洲素食，便宜，快，不用费心
-
-推荐语：
-亚洲风格的素食快餐，但食材新鲜、口味调得好。越南风格的汤粉、炒饭、spring rolls，都有素食或全素版本。吃半小时够了。
-
-小提醒：
-价位很低（人均 10–18€），人气高但翻台快。现金优先，刷卡也行。
-
-[查看地图](https://www.google.com/maps/search/Bodhi+München)`
-};
-
-const FOLLOW_UP_CHIPS = {
-  berlin: ['还有哪些选择？', '更适合约会的？', '不排队的？'],
-  paris: ['预算再低一点？', '午餐去哪里？', '附近还有什么？'],
-  london: ['预订更方便的？', '更安静一点的？', 'Soho 附近还有？'],
-  munich: ['午餐去哪里？', '纯素选择？', '价格再低一点？']
-};
-
-const WELCOME_CHIPS = [
-  'Berlin solo ramen',
-  'Paris date bistro',
-  'London casual dinner',
-  'Munich vegan dinner',
-];
-
-/* ── SESSION STATE ── */
+const WEBHOOK_URL = 'https://misshiguan-proxy.rachelchen77ccc.workers.dev';
+const DEMO_MODE = true;
 const STORAGE_KEY = 'demo_sessions_v1';
-const FAVS_KEY = 'misshiguan_favorites_v2';
+const SIDEBAR_WIDTH_KEY = 'misshiguan_sidebar_width_v1';
+const SIDEBAR_MIN_WIDTH = 208;
+const SIDEBAR_MAX_WIDTH = 360;
+
 let sessions = [];
 let currentSessionId = null;
 let busy = false;
+let currentView = 'chat'; // 'chat' | 'favorites'
+let currentMode = 'recommend'; // 'recommend' | 'decide'
+let sessionRenamingId = null;
+let sessionRenameDraft = '';
+let sidebarWidth = 240;
+let isSidebarResizing = false;
+
+const FAVS_KEY = 'misshiguan_favorites_v2';
 let _favPopoverRestaurant = null;
+let favExpandedCollection = null;
+let favPendingDeleteCollection = null;
+let favRenamingCollection = null;
+let favRenameDraft = '';
+let favExpandedCity = null;
+let favMetaEditingKey = null;
+let favMetaDraftTitle = '';
+let favMetaDraftCover = '';
+let favMetaDraftImage = '';
 
-/* ── SESSION HELPERS ── */
-function loadSessions() {
-  try { const r = localStorage.getItem(STORAGE_KEY); sessions = r ? JSON.parse(r) : []; } catch { sessions = []; }
+const RECOMMEND_PLACEHOLDER = '例如：帮我找 Berlin Mitte 适合约会的 bistro…';
+const DECIDE_PLACEHOLDER = '例如：帮我决定今天吃什么，想吃便宜又热乎的…';
+const DECIDE_CUSTOM_OPTIONS_KEY = 'misshiguan_custom_wheel_options_v1';
+const COLLECTION_META_KEY = 'misshiguan_collection_meta_v1';
+const RECOMMEND_WELCOME_CHIPS = [
+  'Berlin 一个人吃的中餐',
+  'Paris 适合约会的 bistro',
+  'London 平价拉面',
+  'Munich vegan dinner',
+  'Singapore brunch spots'
+];
+const DECIDE_FILTER_GROUPS = [
+  { key: 'mealType', label: '这一顿是？', fallback: '随便', options: ['早餐', 'brunch', '午餐', '下午茶', '晚餐', '夜宵', '随便'] },
+  { key: 'mood', label: '今天想吃什么感觉？', fallback: '随便', options: ['清淡', '重口', '热乎', '便宜', '精致一点', '随便'] },
+  { key: 'scene', label: '场景是？', fallback: '不确定', options: ['一个人', '和朋友', '约会', '赶时间', '不确定'] }
+];
+const DECIDE_MEAL_OPTION_MAP = {
+  '早餐': ['粥', '包子', '咖啡', '三明治', '面包', 'brunch'],
+  'brunch': ['brunch', '咖啡', '轻食', '蛋料理', '三明治', '甜点'],
+  '午餐': ['中餐', '日料', '越南粉', '盖饭', '面', '轻食'],
+  '下午茶': ['咖啡', '甜点', '奶茶', '蛋糕', '面包', '冰淇淋'],
+  '晚餐': ['火锅', '川菜', '日料', '韩餐', '意面', '烧烤'],
+  '夜宵': ['拉面', '炸鸡', '烧烤', '麻辣烫', '汉堡', '便利店热食']
+};
+const DECIDE_MOOD_OPTION_MAP = {
+  '清淡': ['轻食', '粥', '越南粉', '日料', '汤面'],
+  '重口': ['川菜', '火锅', '烧烤', '麻辣烫', '韩餐'],
+  '热乎': ['面', '汤粉', '火锅', '粥', '拉面'],
+  '便宜': ['盖饭', '面', '快餐', '包子', '便利店热食'],
+  '精致一点': ['brunch', '日料', '意面', 'bistro', '甜点']
+};
+const DECIDE_SCENE_OPTION_MAP = {
+  '一个人': ['拉面', '盖饭', '面', '轻食', '快餐'],
+  '和朋友': ['火锅', '烧烤', '韩餐', '川菜', '披萨'],
+  '约会': ['bistro', '意面', '日料', 'brunch', '甜点'],
+  '赶时间': ['快餐', '三明治', '盖饭', '面', '咖啡']
+};
+const DECIDE_GENERAL_FILLERS = ['中餐', '日料', '拉面', '轻食', '火锅', '咖啡', '盖饭', '甜点', '面', '三明治', '烧烤', '意面'];
+const DECIDE_MAJOR_CUISINES = ['中餐', '日料', '韩餐', '法餐', '意餐', '东南亚菜', '南亚菜', '地中海菜', '美式', '墨西哥菜'];
+const DECIDE_CHINESE_REGIONAL = ['云南菜', '贵州菜', '川菜', '湘菜', '粤菜', '江浙菜', '东北菜', '西北菜', '潮汕菜', '客家菜', '新疆菜'];
+const DECIDE_FORMAT_TYPES = ['火锅', '烧烤', '面食', '饺子', '盖饭', 'brunch', '快餐', '素食', '小酒馆', '汤面', '日式定食', '烤肉'];
+const DECIDE_SCENE_STYLES = ['热乎的', '重口的', '清淡的', '治愈的', '适合一个人', '适合朋友聚餐', '适合约会'];
+let decideResult = null;
+let decideStarterActive = false;
+let decideRecentResultIds = [];
+let decideWheelOptions = [];
+let decideWheelRotation = 0;
+let decideWheelHighlight = -1;
+let decideWheelSpinning = false;
+let decideWheelTimer = null;
+let decideSelections = { mealType: '随便', mood: '随便', scene: '不确定' };
+let decideCustomOptions = loadCustomWheelOptions();
+let pendingApiPromptOverride = null;
+let pendingApiTask = null;
+let geoStatus = 'idle'; // 'idle' | 'requesting' | 'ready' | 'denied' | 'error'
+let geoData = null; // { lat, lng, accuracy, city, region, label }
+let geoError = '';
+
+function createDecideEntry(text, direction, tags) {
+  return { id: `${direction}|${text}`, text, direction, tags };
 }
-function saveSessions() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions)); } catch {}
+
+function buildDecideDecisionPool() {
+  const out = [];
+  DECIDE_MAJOR_CUISINES.forEach(c => {
+    out.push(createDecideEntry(`要不试试${c}`, c, ['random', 'vibe']));
+    out.push(createDecideEntry(`今天适合来一顿${c}`, c, ['random']));
+  });
+  DECIDE_CHINESE_REGIONAL.forEach(c => {
+    out.push(createDecideEntry(`今天适合吃点${c}`, c, ['random', 'hot']));
+    out.push(createDecideEntry(`要不换个口味试试${c}`, c, ['random', 'vibe']));
+  });
+  DECIDE_FORMAT_TYPES.forEach(t => {
+    out.push(createDecideEntry(`今天来点${t}怎么样`, t, ['random']));
+    out.push(createDecideEntry(`要不就吃${t}，省心也满足`, t, ['cheap', 'comfort']));
+  });
+  DECIDE_SCENE_STYLES.forEach(s => {
+    out.push(createDecideEntry(`今天适合吃点${s}的`, s, ['random']));
+  });
+  DECIDE_CHINESE_REGIONAL.forEach(c => {
+    out.push(createDecideEntry(`今天适合吃点热乎的${c}`, c, ['hot', 'comfort']));
+    out.push(createDecideEntry(`预算友好点的话，${c}会比较稳`, c, ['cheap']));
+  });
+  ['日式定食', '汤面', '素食', 'brunch', '粤菜', '江浙菜', '东南亚菜'].forEach(x => {
+    out.push(createDecideEntry(`今天适合一个人吃点${x}`, x, ['solo', 'light']));
+  });
+  ['烧烤', '火锅', '韩餐', '小酒馆', '川菜'].forEach(x => {
+    out.push(createDecideEntry(`要不约朋友吃${x}，气氛更到位`, x, ['group', 'happy', 'vibe']));
+  });
+  ['法餐', '意餐', '地中海菜', '日料', 'brunch'].forEach(x => {
+    out.push(createDecideEntry(`今天想要点氛围感，可以试试${x}`, x, ['date', 'vibe']));
+  });
+  ['云南菜', '贵州菜', '新疆菜', '墨西哥菜', '南亚菜'].forEach(x => {
+    out.push(createDecideEntry(`想吃重口一点的话，${x}挺带劲`, x, ['heavy', 'happy']));
+  });
+  ['粤菜', '江浙菜', '日料', '素食', '汤面', '东南亚菜'].forEach(x => {
+    out.push(createDecideEntry(`今天走清淡路线，${x}会舒服很多`, x, ['light', 'comfort']));
+  });
+  return out;
 }
-function getCurrentSession() {
-  return sessions.find(s => s.id === currentSessionId) || null;
-}
-function newSession() {
-  const session = {
-    id: 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2,5),
-    title: '新对话',
-    messages: [],
-    sid: 'sid_' + Math.random().toString(36).substr(2,9)
-  };
-  sessions.push(session);
-  saveSessions();
-  currentSessionId = session.id;
-  renderMessages();
-  renderSidebar();
-  document.getElementById('inp').focus();
-}
-function switchSession(id) {
-  if (id === currentSessionId) return;
-  currentSessionId = id;
-  renderMessages();
-  renderSidebar();
-}
-function deleteSession(id) {
-  sessions = sessions.filter(s => s.id !== id);
-  saveSessions();
-  if (currentSessionId === id) {
-    currentSessionId = sessions.length ? sessions[sessions.length - 1].id : null;
-    if (!currentSessionId) newSession(); else renderMessages();
+
+const DECIDE_DECISION_POOL = buildDecideDecisionPool();
+const FAV_COVER_PRESETS = [
+  { id: 'warm-orange', label: '暖橘', emoji: '🍊', gradient: 'linear-gradient(135deg, #D77749 0%, #E9B07B 52%, #F5D6B6 100%)', accent: '#D77749' },
+  { id: 'coffee', label: '咖啡', emoji: '☕', gradient: 'linear-gradient(135deg, #6F4C3E 0%, #9E6C53 52%, #D6B59D 100%)', accent: '#8C5E4A' },
+  { id: 'night-snack', label: '夜宵', emoji: '🌙', gradient: 'linear-gradient(135deg, #4C3A36 0%, #7C5849 45%, #D48B57 100%)', accent: '#D48B57' },
+  { id: 'light-fresh', label: '清淡', emoji: '🥬', gradient: 'linear-gradient(135deg, #8DAF8A 0%, #C2D2AE 48%, #EFE4C8 100%)', accent: '#8AA282' },
+  { id: 'coastal', label: '海边', emoji: '🌊', gradient: 'linear-gradient(135deg, #6C8FA4 0%, #A8C7CB 48%, #EEDBC0 100%)', accent: '#6C8FA4' },
+  { id: 'city-glow', label: '城市', emoji: '🏙️', gradient: 'linear-gradient(135deg, #6B5B73 0%, #A27E8B 48%, #E6C3AA 100%)', accent: '#8A6A76' }
+];
+
+/* ── FAVORITES HELPERS ── */
+function loadCollectionMeta() {
+  try {
+    const raw = localStorage.getItem(COLLECTION_META_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
   }
-  renderSidebar();
 }
 
-/* ── FAV HELPERS ── */
+function saveCollectionMeta(meta) {
+  try { localStorage.setItem(COLLECTION_META_KEY, JSON.stringify(meta)); } catch {}
+}
+
+function getCollectionMeta(metaKey) {
+  const meta = loadCollectionMeta();
+  return meta && meta[metaKey] ? meta[metaKey] : {};
+}
+
+function getCoverPresetById(id) {
+  return FAV_COVER_PRESETS.find(p => p.id === id) || FAV_COVER_PRESETS[0];
+}
+
+function hashString(text) {
+  const raw = String(text || '');
+  let hash = 0;
+  for (let i = 0; i < raw.length; i++) hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+  return Math.abs(hash);
+}
+
+function pickDefaultCoverId(seed) {
+  return FAV_COVER_PRESETS[hashString(seed) % FAV_COVER_PRESETS.length].id;
+}
+
+function buildCollectionMetaKey(kind, name) {
+  return `${kind}:${name}`;
+}
+
+function getDisplayMeta(metaKey, fallbackTitle) {
+  const meta = getCollectionMeta(metaKey);
+  return {
+    title: meta.title && String(meta.title).trim() ? String(meta.title).trim() : fallbackTitle,
+    cover: meta.cover || pickDefaultCoverId(metaKey),
+    coverImage: meta.coverImage || ''
+  };
+}
+
+function clearUnusedCollectionMeta(activeKeys) {
+  const meta = loadCollectionMeta();
+  const next = {};
+  Object.keys(meta).forEach(key => {
+    if (activeKeys.includes(key)) next[key] = meta[key];
+  });
+  saveCollectionMeta(next);
+}
+
+function openCollectionMetaEditor(metaKey, fallbackTitle) {
+  const meta = getDisplayMeta(metaKey, fallbackTitle);
+  favMetaEditingKey = metaKey;
+  favMetaDraftTitle = meta.title;
+  favMetaDraftCover = meta.cover;
+  favMetaDraftImage = meta.coverImage || '';
+}
+
+function closeCollectionMetaEditor() {
+  favMetaEditingKey = null;
+  favMetaDraftTitle = '';
+  favMetaDraftCover = '';
+  favMetaDraftImage = '';
+}
+
+function submitCollectionMeta(metaKey, fallbackTitle) {
+  const title = favMetaDraftTitle.trim() || fallbackTitle;
+  const cover = favMetaDraftCover || pickDefaultCoverId(metaKey);
+  const meta = loadCollectionMeta();
+  meta[metaKey] = { title, cover, coverImage: favMetaDraftImage || '' };
+  saveCollectionMeta(meta);
+  closeCollectionMetaEditor();
+  renderFavView();
+  showFavHint('合集展示已更新');
+}
+
+function removeCollectionCoverImage(metaKey, fallbackTitle) {
+  const meta = loadCollectionMeta();
+  const current = meta[metaKey] || {};
+  meta[metaKey] = {
+    title: current.title || fallbackTitle,
+    cover: current.cover || pickDefaultCoverId(metaKey),
+    coverImage: ''
+  };
+  saveCollectionMeta(meta);
+  favMetaDraftImage = '';
+  renderFavView();
+  showFavHint('已恢复预设封面');
+}
+
+function handleCollectionCoverUpload(metaKey, fallbackTitle, file) {
+  if (!file) return;
+  const maxBytes = 1.5 * 1024 * 1024;
+  if (file.size > maxBytes) {
+    showFavHint('图片有点大，换一张 1.5MB 以内的吧');
+    return;
+  }
+  if (!/^image\//i.test(file.type || '')) {
+    showFavHint('请选择图片文件');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const result = typeof reader.result === 'string' ? reader.result : '';
+    if (!result.startsWith('data:image/')) {
+      showFavHint('这张图片没读出来，再试一次看看');
+      return;
+    }
+    const meta = loadCollectionMeta();
+    const current = meta[metaKey] || {};
+    meta[metaKey] = {
+      title: current.title || favMetaDraftTitle || fallbackTitle,
+      cover: favMetaDraftCover || current.cover || pickDefaultCoverId(metaKey),
+      coverImage: result
+    };
+    saveCollectionMeta(meta);
+    favMetaDraftImage = result;
+    renderFavView();
+    showFavHint('封面已换成你的图片');
+  };
+  reader.onerror = () => showFavHint('图片读取失败了，再试一次吧');
+  reader.readAsDataURL(file);
+}
+
+function getCityCoverLabel(city) {
+  const raw = String(city || '').trim();
+  if (!raw) return '';
+  if (/\s+am\s+/i.test(raw)) return raw.split(/\s+am\s+/i)[0];
+  if (raw.includes(' · ')) return raw.split(' · ')[0];
+  if (/[，,]/.test(raw)) return raw.split(/[，,]/)[0].trim();
+  const words = raw.split(/\s+/).filter(Boolean);
+  if (words.length > 2) return words.slice(0, 2).join(' ');
+  return raw;
+}
+
+function getCollectionCoverLabel(title) {
+  const raw = String(title || '').trim();
+  if (!raw) return '';
+  if (/[\u4e00-\u9fa5]/.test(raw)) return raw.slice(0, 4);
+  const words = raw.split(/\s+/).filter(Boolean);
+  if (words.length > 1) return words.slice(0, 2).join(' ');
+  return raw.slice(0, 18);
+}
+
+function buildCoverStyle(meta, cover) {
+  if (meta && meta.coverImage) {
+    const safeUrl = meta.coverImage.replace(/"/g, '&quot;');
+    return `background-image:linear-gradient(180deg, rgba(20,15,10,0.10), rgba(20,15,10,0.28)), url("${safeUrl}");background-size:cover;background-position:center;`;
+  }
+  return `background:${cover.gradient};`;
+}
+
+function removeFavoriteFromAllCollections(target) {
+  const f = loadFavs();
+  const key = favKey(target.name, target.address);
+  Object.keys(f).forEach(collName => {
+    f[collName] = (f[collName] || []).filter(item => favKey(item.name, item.address) !== key);
+    if (f[collName].length === 0) delete f[collName];
+  });
+  saveFavs(f);
+  refreshAllCardFavStates();
+}
+
+function loadCustomWheelOptions() {
+  try {
+    const raw = localStorage.getItem(DECIDE_CUSTOM_OPTIONS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed)
+      ? parsed.map(normalizeCustomWheelOption).filter(Boolean).slice(0, 18)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCustomWheelOptions(options) {
+  try { localStorage.setItem(DECIDE_CUSTOM_OPTIONS_KEY, JSON.stringify(options)); } catch {}
+}
+
+function normalizeCustomWheelOption(value) {
+  const cleaned = String(value || '').replace(/\s+/g, ' ').trim();
+  if (!cleaned) return '';
+  return cleaned.slice(0, 16);
+}
+
 function loadFavs() {
   try { const r = localStorage.getItem(FAVS_KEY); return r ? JSON.parse(r) : {}; } catch { return {}; }
 }
 function saveFavs(f) {
   try { localStorage.setItem(FAVS_KEY, JSON.stringify(f)); } catch {}
 }
-function favKey(name, address) { return (name||'').trim() + '||' + (address||'').trim(); }
+function favKey(name, address) {
+  return (name || '').trim() + '||' + (address || '').trim();
+}
 function isFavorited(name, address) {
   const k = favKey(name, address);
   return Object.values(loadFavs()).some(list => list.some(r => favKey(r.name, r.address) === k));
@@ -2941,7 +3008,13 @@ function setRestaurantInCollection(restaurant, collName, shouldAdd) {
   if (!f[collName]) f[collName] = [];
   const idx = f[collName].findIndex(r => favKey(r.name, r.address) === k);
   if (shouldAdd) {
-    if (idx === -1) f[collName].push({ name: restaurant.name, rating: restaurant.rating, address: restaurant.address, mapUrl: restaurant.mapUrl, savedAt: Date.now() });
+    if (idx === -1) f[collName].push({
+      name: restaurant.name,
+      rating: restaurant.rating,
+      address: restaurant.address,
+      mapUrl: restaurant.mapUrl,
+      savedAt: Date.now()
+    });
   } else {
     if (idx !== -1) f[collName].splice(idx, 1);
     if (f[collName].length === 0) delete f[collName];
@@ -2954,212 +3027,1198 @@ function addToNewCollection(collName, restaurant) {
   if (!f[collName]) f[collName] = [];
   let added = false;
   if (!f[collName].some(r => favKey(r.name, r.address) === k)) {
-    f[collName].push({ name: restaurant.name, rating: restaurant.rating, address: restaurant.address, mapUrl: restaurant.mapUrl, savedAt: Date.now() });
+    f[collName].push({
+      name: restaurant.name,
+      rating: restaurant.rating,
+      address: restaurant.address,
+      mapUrl: restaurant.mapUrl,
+      savedAt: Date.now()
+    });
     added = true;
   }
   saveFavs(f); return added;
 }
-function refreshAllCardFavStates() {
-  document.querySelectorAll('.fav-btn').forEach(btn => {
-    const saved = isFavorited(btn.dataset.name, btn.dataset.address);
-    btn.classList.toggle('saved', saved);
-    btn.textContent = saved ? '♥' : '♡';
-    btn.title = saved ? '已收藏' : '收藏';
-  });
+
+function decodeMapUrlHint(url) {
+  if (!url) return '';
+  try {
+    return decodeURIComponent(String(url).replace(/\+/g, ' '));
+  } catch {
+    return String(url || '');
+  }
 }
 
-/* ── FAV POPOVER ── */
-function openFavPopover(restaurant) {
-  _favPopoverRestaurant = restaurant;
-  document.getElementById('favPanelSub').textContent = restaurant.name || '';
-  renderFavPopover();
-  document.getElementById('favOverlay').classList.add('open');
-  document.getElementById('favNewInput').value = '';
+function normalizeCityLabel(raw) {
+  let txt = String(raw || '').replace(/\s+/g, ' ').trim();
+  if (!txt) return '';
+  if (/^https?:\/\//i.test(txt)) return '';
+  txt = txt.replace(/\b\d{4,6}\b/g, '').replace(/\s{2,}/g, ' ').trim();
+  txt = txt.replace(/^[,\-·\s]+|[,\-·\s]+$/g, '');
+  if (!txt) return '';
+  const generic = ['street', 'road', 'rd', 'st', 'avenue', 'ave', 'restaurant', 'google maps'];
+  if (generic.some(word => txt.toLowerCase() === word)) return '';
+  if (/^[A-Za-z]{1,2}$/.test(txt)) return '';
+  return txt.slice(0, 28);
 }
-function closeFavPopover() {
-  document.getElementById('favOverlay').classList.remove('open');
-  _favPopoverRestaurant = null;
-  refreshAllCardFavStates();
-}
-function renderFavPopover() {
-  const r = _favPopoverRestaurant; if (!r) return;
-  const f = loadFavs();
-  const checked = getRestaurantCollections(r.name, r.address);
-  const allColls = Object.keys(f);
-  const listEl = document.getElementById('favCollsList');
-  listEl.innerHTML = '';
-  if (allColls.length === 0) {
-    const hint = document.createElement('div');
-    hint.className = 'fav-empty-hint';
-    hint.textContent = '还没有合集，请先新建一个';
-    listEl.appendChild(hint);
-    return;
+
+function inferCityFromFavorite(favorite) {
+  if (!favorite) return '其他收藏';
+  const direct = normalizeCityLabel(favorite.city || favorite.region);
+  if (direct) return direct;
+
+  const address = String(favorite.address || '');
+  const zhMatch = address.match(/([\u4e00-\u9fa5]{2,}(?:市|区|县))/);
+  if (zhMatch) return normalizeCityLabel(zhMatch[1]);
+
+  const countryLike = ['germany', 'deutschland', 'czechia', 'france', 'italy', 'china', 'japan', 'usa', 'united states'];
+  const segments = `${address},${decodeMapUrlHint(favorite.mapUrl)}`
+    .split(/[,|·\n]/)
+    .map(part => normalizeCityLabel(part))
+    .filter(Boolean);
+
+  for (let i = segments.length - 1; i >= 0; i--) {
+    const seg = segments[i];
+    const lower = seg.toLowerCase();
+    if (countryLike.includes(lower)) continue;
+    if (/\d/.test(seg) && !/[A-Za-z\u4e00-\u9fa5]/.test(seg.replace(/\d/g, ''))) continue;
+    if (/[A-Za-z\u4e00-\u9fa5]/.test(seg)) return seg;
   }
-  allColls.forEach(coll => {
-    const isChecked = checked.includes(coll);
-    const item = document.createElement('div');
-    item.className = 'fav-coll-item' + (isChecked ? ' checked' : '');
-    item.innerHTML = `<div class="fav-coll-check">${isChecked ? '✓' : ''}</div><span class="fav-coll-label">${esc(coll)}</span><span class="fav-coll-count-badge">${f[coll].length}</span>`;
-    item.addEventListener('click', () => {
-      const nowChecked = item.classList.contains('checked');
-      setRestaurantInCollection(r, coll, !nowChecked);
-      renderFavPopover();
-      if (!nowChecked) showFavHint(`已收藏到「${coll}」`);
+
+  const urlHint = decodeMapUrlHint(favorite.mapUrl);
+  const queryMatch = urlHint.match(/[?&](?:q|query)=([^&]+)/i);
+  if (queryMatch) {
+    const parts = queryMatch[1].split(/[,+]/).map(normalizeCityLabel).filter(Boolean);
+    if (parts.length > 0) return parts[0];
+  }
+  const placeMatch = urlHint.match(/place\/([^/?]+)/i);
+  if (placeMatch) {
+    const parts = placeMatch[1].split(/[,+]/).map(normalizeCityLabel).filter(Boolean);
+    if (parts.length > 0) return parts[0];
+  }
+  return '其他收藏';
+}
+
+function flattenFavoritesWithCollections(favs) {
+  const byKey = new Map();
+  Object.keys(favs || {}).forEach(collName => {
+    (favs[collName] || []).forEach(item => {
+      const key = favKey(item.name, item.address);
+      if (!byKey.has(key)) {
+        byKey.set(key, {
+          ...item,
+          collections: [collName]
+        });
+      } else {
+        const existing = byKey.get(key);
+        if (!existing.collections.includes(collName)) existing.collections.push(collName);
+      }
     });
-    listEl.appendChild(item);
   });
+  return Array.from(byKey.values());
 }
-function initFavPopover() {
-  document.getElementById('favOverlay').addEventListener('click', e => {
-    if (e.target === document.getElementById('favOverlay')) closeFavPopover();
+
+function groupFavoritesByCity(favs) {
+  const flat = flattenFavoritesWithCollections(favs);
+  const groups = new Map();
+  flat.forEach(item => {
+    const city = inferCityFromFavorite(item) || '其他收藏';
+    const key = buildCollectionMetaKey('city', city);
+    if (!groups.has(key)) groups.set(key, { key, city, items: [] });
+    groups.get(key).items.push(item);
   });
-  document.getElementById('favNewBtn').addEventListener('click', doAddNewCollection);
-  document.getElementById('favNewInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') doAddNewCollection();
-  });
-  document.getElementById('favPanelClose').addEventListener('click', closeFavPopover);
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && document.getElementById('favOverlay').classList.contains('open')) closeFavPopover();
-  });
-}
-function doAddNewCollection() {
-  const inp = document.getElementById('favNewInput');
-  const name = inp.value.trim();
-  if (!name || !_favPopoverRestaurant) return;
-  const added = addToNewCollection(name, _favPopoverRestaurant);
-  inp.value = '';
-  renderFavPopover();
-  if (added) showFavHint(`已收藏到「${name}」`);
-  else showFavHint(`「${name}」里已存在这家店`);
-}
-function showFavHint(msg) {
-  let hint = document.getElementById('favHint');
-  if (!hint) {
-    hint = document.createElement('div');
-    hint.id = 'favHint';
-    hint.className = 'fav-hint';
-    document.body.appendChild(hint);
-  }
-  hint.textContent = msg;
-  hint.classList.add('show');
-  clearTimeout(hint._timer);
-  hint._timer = setTimeout(() => { hint.classList.remove('show'); }, 1800);
+  return Array.from(groups.values())
+    .map(group => ({ ...group, count: group.items.length }))
+    .sort((a, b) => b.count - a.count || a.city.localeCompare(b.city));
 }
 
 /* ── UTILS ── */
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+
 function scroll() {
   const c = document.getElementById('chatWrap');
   setTimeout(() => c.scrollTop = c.scrollHeight, 60);
 }
+
 function resize(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 130) + 'px';
 }
-function starStr(r) {
-  if (!r) return '';
-  const n = parseFloat(r), f = Math.floor(n);
-  return '★'.repeat(f) + (n%1>=0.5?'½':'') + '☆'.repeat(5-f-(n%1>=0.5?1:0));
+
+function formatCoord(n) {
+  return Number(n).toFixed(4);
 }
 
-/* ── PARSE RESTAURANTS ── */
-function matchRestaurantField(block, labels) {
-  for (const label of labels) {
-    const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const match = block.match(new RegExp(`(?:^|\\n)${escaped}\\s*[：:]\\s*([^\\n]+)`));
-    if (match && match[1]) return match[1].trim();
-  }
-  return null;
+function guessGeoLabel(data) {
+  if (!data) return '';
+  if (data.city && data.region) return `${data.region} · ${data.city}`;
+  if (data.city) return data.city;
+  if (data.region) return data.region;
+  if (data.label && typeof data.label === 'string') return data.label;
+  if (Number.isFinite(data.lat) && Number.isFinite(data.lng)) return '你的当前位置';
+  return '';
 }
-function parseRestaurants(text) {
-  const cleanText = String(text || '');
-  const blocks = cleanText.split(/(?=🍽️)/);
-  const restaurants = [], others = [];
-  blocks.forEach(b => {
-    b = b.trim(); if (!b) return;
-    if (b.startsWith('🍽️')) {
-      const nm = b.match(/🍽️\s*\*?\*?([^\n*]+)\*?\*?/);
-      const rt = b.match(/⭐\s*([\d.]+)(?:\s*[（(]([^)）]+)[)）])?/);
-      const ad = b.match(/📍\s*([^\n]+)/);
-      const hr = b.match(/🕐\s*([^\n]+)/);
-      const lk = b.match(/\[([^\]]*(?:Google Maps|查看)[^\]]*)\]\((https?:\/\/[^\)]+)\)/i);
-      const suitableReason = matchRestaurantField(b, ['适合你']);
-      const warmRecommendation = matchRestaurantField(b, ['推荐语']);
-      const reviewSignal = matchRestaurantField(b, ['小提醒']);
-      if (nm) {
-        restaurants.push({
-          name: nm[1].trim(),
-          rating: rt ? rt[1] : null,
-          ratingCount: rt && rt[2] ? rt[2].trim() : null,
-          address: ad ? ad[1].trim() : null,
-          hours: hr ? hr[1].trim() : null,
-          suitableReason,
-          warmRecommendation,
-          reviewSignal,
-          mapUrl: lk ? lk[2] : null,
-        });
-      }
+
+function textLooksLikeHasLocation(text) {
+  const raw = String(text || '').trim();
+  if (!raw) return false;
+  if (/(附近|周边|定位|当前位置|location|city|near|around|district)/i.test(raw)) return true;
+  if (/\b\d{1,3}\.\d{3,}\s*,\s*\d{1,3}\.\d{3,}\b/.test(raw)) return true;
+  if (/(?:在|去|到|near|around|in|at)\s*[A-Za-z\u4e00-\u9fa5]{2,}/i.test(raw)) return true;
+  if (/[\u4e00-\u9fa5]{2,}(市|区|县|镇|乡|村|路|街|道|巷|里|湾|站|机场|公园|广场|商圈|新城)/.test(raw)) return true;
+  if (/\b[A-Za-z][A-Za-z\s'-]{2,}\s(city|district|downtown|uptown|center|centre|cbd)\b/i.test(raw)) return true;
+  const named = ['柏林', '慕尼黑', '巴黎', '伦敦', '东京', '新加坡', '阿姆斯特丹', '纽约', 'Berlin', 'Munich', 'Paris', 'London', 'Tokyo', 'Singapore', 'Amsterdam', 'New York', 'Hong Kong', 'San Sebastian'];
+  return named.some(loc => raw.toLowerCase().includes(String(loc).toLowerCase()));
+}
+
+function buildRecommendInputWithGeo(text) {
+  if (currentMode !== 'recommend') return text;
+  if (geoStatus !== 'ready' || !geoData) return text;
+  if (textLooksLikeHasLocation(text)) return text;
+  const label = guessGeoLabel(geoData) || '我的当前位置';
+  return `${text}\n\n补充定位参考：我当前在${label}。请优先推荐附近可步行或短途可达的餐厅，不要跨城市或跨国家推荐。若附近该细分菜系选择不多，请先在附近范围内联想放宽到相近菜系（例如细分中餐→中餐→亚洲菜），并用一句自然话说明已做就近放宽。若我手动补充了其他地点，请以我手动输入为准。`;
+}
+
+function refreshRecommendWelcomeIfNeeded() {
+  if (currentView !== 'chat' || currentMode !== 'recommend') return;
+  const session = getCurrentSession();
+  if (!session || session.messages.length === 0) renderMessages();
+}
+
+function getGeoHintText() {
+  if (currentMode !== 'recommend') return '';
+  if (geoStatus === 'requesting') return '正在获取当前位置…';
+  if (geoStatus === 'ready' && geoData) {
+    return `已获取默认位置：${guessGeoLabel(geoData) || '你的当前位置'}。你仍可随时手动输入其他城市或区域，且手动输入始终优先。`;
+  }
+  if (geoStatus === 'denied') return '你已拒绝定位权限，没关系，直接输入城市也可以（例如：Berlin Mitte）。';
+  if (geoStatus === 'error') return `定位暂不可用（${geoError || '未知原因'}），你仍可直接输入城市继续。`;
+  return '可选：点击「📍 使用当前位置」让我更快定位到你附近的推荐。';
+}
+
+function updateGeoHintUI() {
+  const hint = document.getElementById('geoHint');
+  if (!hint) return;
+  if (currentMode !== 'recommend') {
+    hint.textContent = '';
+    hint.style.display = 'none';
+    return;
+  }
+  hint.style.display = '';
+  hint.textContent = getGeoHintText();
+}
+
+async function reverseGeocode(lat, lng) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 4500);
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&zoom=12&addressdetails=1`;
+    const res = await fetch(url, {
+      headers: { 'Accept-Language': 'zh-CN,en' },
+      signal: ctrl.signal
+    });
+    if (!res.ok) throw new Error('reverse geocode failed');
+    const data = await res.json();
+    const addr = data && data.address ? data.address : {};
+    const city = addr.city || addr.town || addr.county || addr.state || '';
+    const region = addr.suburb || addr.borough || addr.city_district || addr.state_district || '';
+    const country = addr.country || '';
+    const countryCode = addr.country_code || '';
+    return { city: city || '', region: region || '', country: country || '', countryCode: countryCode || '' };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function requestGeolocation(options = {}) {
+  const onSuccess = typeof options.onSuccess === 'function' ? options.onSuccess : null;
+  const onError = typeof options.onError === 'function' ? options.onError : null;
+  let callbackDone = false;
+  const finishSuccess = () => {
+    if (callbackDone) return;
+    callbackDone = true;
+    if (onSuccess) onSuccess();
+  };
+  const finishError = (reason) => {
+    if (callbackDone) return;
+    callbackDone = true;
+    if (onError) onError(reason);
+  };
+  if (!navigator.geolocation) {
+    geoStatus = 'error';
+    geoError = '当前浏览器不支持定位';
+    updateGeoHintUI();
+    refreshRecommendWelcomeIfNeeded();
+    if (currentView === 'chat' && currentMode === 'decide') renderMessages();
+    finishError('unsupported');
+    return;
+  }
+  if (geoStatus === 'requesting') {
+    finishError('pending');
+    return;
+  }
+  geoStatus = 'requesting';
+  geoError = '';
+  updateGeoHintUI();
+  refreshRecommendWelcomeIfNeeded();
+  if (currentView === 'chat' && currentMode === 'decide') renderMessages();
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+    geoStatus = 'ready';
+    geoData = {
+      lat,
+      lng,
+      accuracy: pos.coords.accuracy,
+      city: '',
+      region: '',
+      country: '',
+      countryCode: '',
+      label: '你的当前位置'
+    };
+    updateGeoHintUI();
+    refreshRecommendWelcomeIfNeeded();
+    if (currentView === 'chat' && currentMode === 'decide') renderMessages();
+    finishSuccess();
+    try {
+      const named = await reverseGeocode(lat, lng);
+      if (geoStatus !== 'ready' || !geoData) return;
+      geoData.city = named.city || '';
+      geoData.region = named.region || '';
+      geoData.country = named.country || '';
+      geoData.countryCode = named.countryCode || '';
+      geoData.label = guessGeoLabel(geoData);
+      updateGeoHintUI();
+      refreshRecommendWelcomeIfNeeded();
+      if (currentView === 'chat' && currentMode === 'decide') renderMessages();
+    } catch {}
+  }, (err) => {
+    if (err && err.code === 1) {
+      geoStatus = 'denied';
+      geoError = '用户拒绝授权';
+    } else if (err && err.code === 3) {
+      geoStatus = 'error';
+      geoError = '定位超时';
     } else {
-      others.push(b);
+      geoStatus = 'error';
+      geoError = '定位失败';
     }
+    updateGeoHintUI();
+    refreshRecommendWelcomeIfNeeded();
+    if (currentView === 'chat' && currentMode === 'decide') renderMessages();
+    finishError('failed');
+  }, {
+    enableHighAccuracy: false,
+    timeout: 8000,
+    maximumAge: 300000
   });
-  return { restaurants, others };
 }
 
-function renderRestaurantRating(r) {
-  if (!r || !r.rating) return '';
-  return `<div class="card-rating">
-    <span class="card-stars">${starStr(r.rating)}</span>
-    <span class="card-score">&thinsp;${esc(r.rating)} 分</span>
-    ${r.ratingCount ? `<span class="card-rating-count">(${esc(r.ratingCount)})</span>` : ''}
-  </div>`;
+function isRateLimitError(text) {
+  const lower = text.toLowerCase();
+  return lower.includes('error in workflow') || lower.includes('rate limit') || lower.includes('too many requests');
 }
 
-function renderRestaurantReasoning(r) {
-  if (!r) return '';
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function shuffleArray(arr) {
+  const copied = [...arr];
+  for (let i = copied.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copied[i], copied[j]] = [copied[j], copied[i]];
+  }
+  return copied;
+}
+
+function pickNoRepeatDecision(candidates) {
+  const source = candidates.length > 0 ? candidates : DECIDE_DECISION_POOL;
+  const fresh = source.filter(item => !decideRecentResultIds.includes(item.id));
+  const chosen = pickRandom(fresh.length > 0 ? fresh : source);
+  decideRecentResultIds.push(chosen.id);
+  if (decideRecentResultIds.length > 14) decideRecentResultIds.shift();
+  return chosen;
+}
+
+function hasGuidedDecideSelection() {
+  return decideSelections.mealType !== '随便' || decideSelections.mood !== '随便' || decideSelections.scene !== '不确定';
+}
+
+function buildGuidedWheelEntries() {
+  const hasSelection = hasGuidedDecideSelection();
+  const custom = decideCustomOptions.map(normalizeCustomWheelOption).filter(Boolean);
+  if (!hasSelection && custom.length === 0) return null;
+
+  const weighted = new Map();
+  const order = [];
+  const addMany = (items, weight) => {
+    (items || []).forEach(item => {
+      const key = normalizeCustomWheelOption(item);
+      if (!key) return;
+      if (!weighted.has(key)) order.push(key);
+      weighted.set(key, (weighted.get(key) || 0) + weight);
+    });
+  };
+
+  addMany(DECIDE_MEAL_OPTION_MAP[decideSelections.mealType], 3);
+  addMany(DECIDE_MOOD_OPTION_MAP[decideSelections.mood], 2);
+  addMany(DECIDE_SCENE_OPTION_MAP[decideSelections.scene], 2);
+  addMany(custom, 4);
+
+  const fallbackPool = [
+    ...custom,
+    ...(DECIDE_MEAL_OPTION_MAP[decideSelections.mealType] || []),
+    ...(DECIDE_MOOD_OPTION_MAP[decideSelections.mood] || []),
+    ...(DECIDE_SCENE_OPTION_MAP[decideSelections.scene] || []),
+    ...DECIDE_GENERAL_FILLERS
+  ].map(normalizeCustomWheelOption).filter(Boolean);
+
+  const ranked = order
+    .sort((a, b) => {
+      const diff = (weighted.get(b) || 0) - (weighted.get(a) || 0);
+      return diff !== 0 ? diff : Math.random() - 0.5;
+    });
+  const targetCount = Math.min(8, Math.max(6, Math.max(ranked.length, custom.length ? 6 : 0)));
+  const picked = ranked.slice(0, targetCount);
+
+  shuffleArray(fallbackPool).forEach(item => {
+    if (picked.length >= targetCount) return;
+    if (!picked.includes(item)) picked.push(item);
+  });
+
+  return shuffleArray(picked.slice(0, 8)).map(direction => (
+    createDecideEntry(`今天签到了：${direction}`, direction, ['guided'])
+  ));
+}
+
+function createWheelOptions() {
+  const guided = buildGuidedWheelEntries();
+  if (guided && guided.length > 0) return guided;
+  const copied = [...DECIDE_DECISION_POOL];
+  copied.sort(() => Math.random() - 0.5);
+  return copied.slice(0, 8);
+}
+
+function ensureWheelOptions() {
+  if (decideWheelOptions.length === 0) decideWheelOptions = createWheelOptions();
+}
+
+function clearDecideWheelTimer() {
+  if (!decideWheelTimer) return;
+  clearTimeout(decideWheelTimer);
+  decideWheelTimer = null;
+}
+
+function resetDecideStarter() {
+  clearDecideWheelTimer();
+  decideResult = null;
+  decideWheelRotation = 0;
+  decideWheelHighlight = -1;
+  decideWheelSpinning = false;
+  decideWheelOptions = createWheelOptions();
+}
+
+function updateDecideWheelFromCurrentState(options = {}) {
+  clearDecideWheelTimer();
+  decideWheelSpinning = false;
+  decideWheelOptions = createWheelOptions();
+  decideWheelHighlight = -1;
+  if (options.resetRotation !== false) decideWheelRotation = 0;
+  if (!options.keepResult) decideResult = null;
+}
+
+function setDecideSelection(key, value) {
+  if (!Object.prototype.hasOwnProperty.call(decideSelections, key)) return;
+  decideSelections[key] = value;
+  updateDecideWheelFromCurrentState();
+  if (currentView === 'chat' && decideStarterActive) renderMessages();
+}
+
+function addCustomDecideOption(value) {
+  const normalized = normalizeCustomWheelOption(value);
+  if (!normalized) return false;
+  if (decideCustomOptions.includes(normalized)) return false;
+  decideCustomOptions = [...decideCustomOptions, normalized].slice(0, 18);
+  saveCustomWheelOptions(decideCustomOptions);
+  updateDecideWheelFromCurrentState();
+  return true;
+}
+
+function removeCustomDecideOption(value) {
+  decideCustomOptions = decideCustomOptions.filter(item => item !== value);
+  saveCustomWheelOptions(decideCustomOptions);
+  updateDecideWheelFromCurrentState();
+}
+
+function filterDecidePoolByLabel(label) {
+  const tagMap = {
+    '想吃热乎的': ['hot', 'comfort'],
+    '想吃便宜点': ['cheap'],
+    '想吃开心一点': ['happy', 'group', 'heavy'],
+    '想吃清淡点': ['light', 'solo'],
+    '想吃有氛围的': ['vibe', 'date']
+  };
+  const tags = tagMap[label] || ['random'];
+  const candidates = DECIDE_DECISION_POOL.filter(item => item.tags.some(tag => tags.includes(tag)));
+  return candidates.length > 0 ? candidates : DECIDE_DECISION_POOL;
+}
+
+function buildDecideResultReason(direction) {
+  const meal = decideSelections.mealType;
+  const mood = decideSelections.mood;
+  const scene = decideSelections.scene;
+  const dir = String(direction || '');
+
+  if (meal === '夜宵' && /(拉面|麻辣烫|烧烤|汤粉|面|便利店热食)/.test(dir)) return '适合深夜吃点热乎的，不用想太多也能立刻被安慰到。';
+  if (meal === '下午茶' && /(咖啡|甜点|蛋糕|冰淇淋|奶茶)/.test(dir)) return '适合把这一顿留给一点轻松和甜味，刚好当作今天的小奖励。';
+  if (meal === '早餐' && /(粥|包子|面包|三明治|咖啡)/.test(dir)) return '适合把这一天温柔地开个头，轻一点也更容易做决定。';
+  if (scene === '赶时间' && /(快餐|盖饭|三明治|咖啡|面)/.test(dir)) return '适合快速解决一顿，不耽误节奏，也不容易踩空。';
+  if (scene === '约会' && /(bistro|意面|日料|brunch|甜点)/i.test(dir)) return '适合慢慢吃一顿，气氛和分寸都比较在线。';
+  if (scene === '和朋友' && /(火锅|烧烤|韩餐|川菜|披萨)/.test(dir)) return '适合边吃边聊，热闹感和分享感都会更到位。';
+  if (scene === '一个人' && /(拉面|盖饭|面|轻食|快餐)/.test(dir)) return '适合一个人稳稳吃完，不用纠结，也不会有压力。';
+  if (mood === '热乎' && /(火锅|面|拉面|粥|汤粉|麻辣烫)/.test(dir)) return '适合现在这种想吃点热乎、让人缓一口气的时候。';
+  if (mood === '便宜' && /(盖饭|面|快餐|包子|便利店热食)/.test(dir)) return '适合预算友好地解决这一顿，省心也很稳。';
+  if (mood === '精致一点' && /(brunch|日料|意面|bistro|甜点)/i.test(dir)) return '适合把这顿吃得讲究一点，仪式感会刚刚好。';
+  if (mood === '清淡' && /(轻食|粥|越南粉|日料|汤面)/.test(dir)) return '适合今天想吃得轻一点，胃口和状态都能被照顾到。';
+  if (mood === '重口' && /(川菜|火锅|烧烤|麻辣烫|韩餐)/.test(dir)) return '适合来点更有存在感的味道，一口下去比较容易满足。';
+
   const parts = [];
-  if (r.suitableReason) {
-    parts.push(`<div class="card-suitable"><div class="card-suitable-label">适合你</div><div class="card-suitable-text">${esc(r.suitableReason)}</div></div>`);
-  }
-  if (r.warmRecommendation) {
-    parts.push(`<div class="card-story">${esc(r.warmRecommendation)}</div>`);
-  }
-  if (r.reviewSignal) {
-    parts.push(`<div class="card-note"><span class="card-note-label">小提醒</span>${esc(r.reviewSignal)}</div>`);
-  }
-  return parts.length ? `<div class="card-reasoning">${parts.join('')}</div>` : '';
+  if (meal !== '随便') parts.push(`${meal}这顿`);
+  if (scene !== '不确定') parts.push(scene === '赶时间' ? '赶一点时间' : scene);
+  if (mood !== '随便') parts.push(`想吃${mood}`);
+  if (parts.length > 0) return `适合现在这种${parts.join('、')}的时候，选它会更容易下决定。`;
+  return '适合现在这种不想继续纠结的时候，顺着这张签去吃通常不会太错。';
 }
 
-/* ── RENDER ── */
+function buildDecideResult(source, fixedEntry) {
+  const picked = fixedEntry || pickNoRepeatDecision(source === 'default' ? DECIDE_DECISION_POOL : decideWheelOptions);
+  return {
+    id: picked.id,
+    source,
+    text: `今天签到了：${picked.direction}`,
+    direction: picked.direction,
+    note: buildDecideResultReason(picked.direction)
+  };
+}
+
+function buildCuisineFallbackHint(direction) {
+  const d = String(direction || '').trim();
+  if (!d) return '';
+  const chainMap = [
+    { keys: ['西北菜'], chain: '西北菜 -> 中餐 -> 亚洲菜' },
+    { keys: ['潮汕菜'], chain: '潮汕菜 -> 粤菜 -> 中餐' },
+    { keys: ['韩餐', '韩国'], chain: '韩餐 -> 亚洲菜' },
+    { keys: ['川菜', '湘菜', '云贵', '云南菜', '贵州菜', '东北菜', '江浙菜', '粤菜', '客家菜', '新疆菜', '中餐'], chain: `${d} -> 中餐 -> 亚洲菜` },
+    { keys: ['日料', '日式'], chain: '日料 -> 亚洲菜' },
+    { keys: ['东南亚', '南亚', '泰餐', '越南', '印度'], chain: `${d} -> 亚洲菜` },
+    { keys: ['法餐', '意餐', '地中海'], chain: `${d} -> 西式餐饮` }
+  ];
+  const matched = chainMap.find(item => item.keys.some(k => d.includes(k)));
+  return matched ? matched.chain : `${d} -> 相近风味 -> 更宽泛品类`;
+}
+
+function buildCuisineFallbackChain(direction) {
+  const d = String(direction || '').trim();
+  if (!d) return [];
+  if (d.includes('新疆菜')) return ['新疆菜', '中餐', '亚洲菜'];
+  if (d.includes('西北菜')) return ['西北菜', '中餐', '亚洲菜'];
+  if (d.includes('潮汕菜')) return ['潮汕菜', '粤菜', '中餐'];
+  if (d.includes('韩餐') || d.includes('韩国')) return ['韩餐', '亚洲菜'];
+  if (d.includes('南亚') || d.includes('印度')) return ['南亚菜', '亚洲菜'];
+  if (d.includes('东南亚') || d.includes('泰') || d.includes('越南')) return ['东南亚菜', '亚洲菜'];
+  if (d.includes('日料') || d.includes('日式')) return ['日料', '亚洲菜'];
+  if (d.includes('中餐') || d.includes('川菜') || d.includes('湘菜') || d.includes('粤菜') || d.includes('江浙') || d.includes('东北菜') || d.includes('云南菜') || d.includes('贵州菜') || d.includes('客家菜')) {
+    return [d, '中餐', '亚洲菜'];
+  }
+  return [d, '相近口味', '亚洲菜'];
+}
+
+function cloneGeoSnapshot() {
+  if (!geoData) return null;
+  return {
+    city: geoData.city || '',
+    region: geoData.region || '',
+    country: geoData.country || '',
+    countryCode: geoData.countryCode || '',
+    label: guessGeoLabel(geoData) || '你的当前位置'
+  };
+}
+
+function normalizeTxt(s) {
+  return String(s || '').toLowerCase();
+}
+
+function includesLocalToken(hay, token) {
+  if (!token) return false;
+  const h = normalizeTxt(hay);
+  const t = normalizeTxt(token);
+  return !!t && h.includes(t);
+}
+
+function isRestaurantWithinGeoLock(rest, geoSnapshot) {
+  if (!rest || !geoSnapshot) return false;
+  const raw = `${rest.address || ''} ${rest.mapUrl || ''}`.trim();
+  if (!raw) return false;
+  const hasCity = includesLocalToken(raw, geoSnapshot.city);
+  const hasRegion = includesLocalToken(raw, geoSnapshot.region);
+  if (!hasCity && !hasRegion) return false;
+  const lower = normalizeTxt(raw);
+  if (geoSnapshot.countryCode && geoSnapshot.countryCode !== 'us') {
+    if (/(usa|united states|u\.s\.|u\.s\.a\.|america)/i.test(lower)) return false;
+  }
+  if (geoSnapshot.country && !includesLocalToken(raw, geoSnapshot.country)) {
+    const countryMentions = ['germany', 'deutschland', 'china', '中国', 'japan', 'japan', 'france', 'uk', 'united kingdom', 'usa', 'united states'];
+    const mentioned = countryMentions.find(c => lower.includes(c));
+    if (mentioned) return false;
+  }
+  return true;
+}
+
+function formatRestaurantsAsText(restaurants, leadText) {
+  const intro = leadText ? `${leadText}\n\n` : '';
+  const blocks = restaurants.map(r => {
+    const lines = [`🍽️ **${r.name || '推荐餐厅'}**`];
+    if (r.rating && r.ratingCount) lines.push(`⭐ ${r.rating}（${r.ratingCount}）`);
+    else if (r.rating) lines.push(`⭐ ${r.rating}`);
+    if (r.address) lines.push(`📍 ${r.address}`);
+    if (r.hours) lines.push(`🕐 ${r.hours}`);
+    if (r.suitableReason) lines.push(`适合你：${r.suitableReason}`);
+    if (r.warmRecommendation) lines.push(`一句有温度的推荐语：${r.warmRecommendation}`);
+    else if (r.quote) lines.push(`💬 ${r.quote}`);
+    if (r.reviewSignal) lines.push(`小提醒：${r.reviewSignal}`);
+    if (r.mapUrl) lines.push(`[查看 Google Maps](${r.mapUrl})`);
+    return lines.join('\n');
+  });
+  return `${intro}${blocks.join('\n\n')}`.trim();
+}
+
+function buildFriendlyCuisineShiftLine(fromCuisine, toCuisine) {
+  if (!fromCuisine || !toCuisine || fromCuisine === toCuisine) return '';
+  if (toCuisine === '中餐') return `你附近正宗${fromCuisine}不太多，我先帮你找些更接近这个口味的中餐～`;
+  if (toCuisine === '亚洲菜') return `这一带${fromCuisine}选择比较少，我先换个更接近的亚洲口味帮你找找看。`;
+  return `这附近${fromCuisine}选择有点少，我先帮你找些更接近这个口味的${toCuisine}～`;
+}
+
+function extractCuisineFromText(text) {
+  const raw = String(text || '');
+  const keys = ['新疆菜', '西北菜', '潮汕菜', '韩餐', '南亚菜', '东南亚菜', '日料', '中餐', '川菜', '湘菜', '粤菜', '江浙菜'];
+  return keys.find(k => raw.includes(k)) || '';
+}
+
+function buildStrictLocalCuisinePrompt(stepCuisine, rootCuisine, geoSnapshot) {
+  const geoLabel = geoSnapshot && geoSnapshot.label ? geoSnapshot.label : '我的当前位置';
+  return `请为我推荐${geoLabel}附近可到达的${stepCuisine}餐厅（原始偏好：${rootCuisine}）。
+要求：
+1) 仅限同城且短途可达，不得跨城市，不得跨国家；
+2) 如果不满足“本地可到达”，宁可少给，也不要给远距离结果；
+3) 输出格式保持餐厅卡片可解析（🍽️/⭐/📍/Google Maps）。`;
+}
+
+async function runStrictLocalCuisineSearch(task, sessionSid) {
+  const geoSnapshot = task && task.geoSnapshot ? task.geoSnapshot : cloneGeoSnapshot();
+  const rootCuisine = task && task.direction ? task.direction : '';
+  if (!geoSnapshot || !rootCuisine) return null;
+  const chain = buildCuisineFallbackChain(rootCuisine);
+  let lastLocalRestaurants = [];
+  let lastStepCuisine = '';
+  for (let i = 0; i < chain.length; i++) {
+    const stepCuisine = chain[i];
+    const prompt = buildStrictLocalCuisinePrompt(stepCuisine, rootCuisine, geoSnapshot);
+    const output = await callAPI(prompt, sessionSid);
+    const parsed = parseRestaurants(output);
+    const localRestaurants = parsed.restaurants.filter(r => isRestaurantWithinGeoLock(r, geoSnapshot));
+    if (localRestaurants.length > 0) {
+      const lead = i > 0 ? buildFriendlyCuisineShiftLine(rootCuisine, stepCuisine) : '';
+      return formatRestaurantsAsText(localRestaurants, lead);
+    }
+    lastLocalRestaurants = localRestaurants;
+    lastStepCuisine = stepCuisine;
+  }
+  if (lastLocalRestaurants.length > 0) {
+    return formatRestaurantsAsText(lastLocalRestaurants, buildFriendlyCuisineShiftLine(rootCuisine, lastStepCuisine));
+  }
+  return `我在你附近认真找过啦，这一带这个口味确实比较少。要不你换一个附近区域，我继续帮你找找？`;
+}
+
+function buildFindByCuisinePrompt(result) {
+  const direction = result && result.direction ? result.direction : '今天状态合适的方向';
+  const geoLabel = geoStatus === 'ready' && geoData ? guessGeoLabel(geoData) : '';
+  if (geoLabel) {
+    const fallbackHint = buildCuisineFallbackHint(direction);
+    return `请按「${direction}」这个方向，推荐我当前位置（${geoLabel}）附近可到达的餐厅。
+【硬性约束】只允许同城且短途可达（步行/公共交通/打车约30分钟内），严禁跨城市或跨国家推荐。
+【降级策略】若附近${direction}选择不多，只能在本地范围内按这个链路放宽：${fallbackHint}；可以放宽菜系，不可以放宽距离。
+【输出要求】若触发放宽，用一句自然中文简短说明“附近该细分选择不多，已帮你放宽到更接近方向”，再给附近候选。`;
+  }
+  return `请按「${direction}」这个方向推荐餐厅。`;
+}
+
+function buildFindByCuisineUserPrompt(result) {
+  const direction = result && result.direction ? result.direction : '这类';
+  return `帮我找附近可到达的${direction}餐厅～`;
+}
+
+function prefillManualCityPromptByDecide(result) {
+  const direction = result && result.direction ? result.direction : '今天状态合适的方向';
+  const inp = document.getElementById('inp');
+  if (!inp) return;
+  inp.value = `按「${direction}」这个方向帮我找餐厅，城市：`;
+  resize(inp);
+  inp.focus();
+}
+
+function chooseDecideChip(label) {
+  if (label === '完全随机') return;
+  const picked = pickNoRepeatDecision(filterDecidePoolByLabel(label));
+  decideResult = {
+    id: picked.id,
+    source: 'chip',
+    text: `今天签到了：${picked.direction}`,
+    direction: picked.direction,
+    note: buildDecideResultReason(picked.direction)
+  };
+  decideWheelHighlight = -1;
+  if (currentView === 'chat' && decideStarterActive) renderMessages();
+}
+
+function runDecideWheel(welcomeEl) {
+  if (decideWheelSpinning) return;
+  ensureWheelOptions();
+  decideWheelSpinning = true;
+  const wheel = welcomeEl.querySelector('.decide-wheel');
+  const segCount = decideWheelOptions.length;
+  const step = 360 / segCount;
+  const picked = pickNoRepeatDecision(decideWheelOptions);
+  const idx = decideWheelOptions.findIndex(item => item.id === picked.id);
+  const centerAngle = idx * step + step / 2;
+  const alignToPointer = 360 - centerAngle;
+  const jitter = Math.random() * 8 - 4;
+  const targetRotation = decideWheelRotation + 1260 + alignToPointer + jitter;
+  if (wheel) {
+    wheel.style.transition = 'transform 1500ms cubic-bezier(0.2, 0.8, 0.15, 1)';
+    requestAnimationFrame(() => { wheel.style.transform = `rotate(${targetRotation}deg)`; });
+  }
+  clearDecideWheelTimer();
+  decideWheelTimer = setTimeout(() => {
+    decideWheelSpinning = false;
+    decideWheelRotation = targetRotation;
+    decideWheelHighlight = idx;
+    decideResult = buildDecideResult('wheel', picked);
+    renderMessages();
+  }, 1550);
+}
+
+function openDecideStarter() {
+  currentMode = 'decide';
+  decideStarterActive = true;
+  resetDecideStarter();
+  syncModeUI();
+  if (currentView === 'chat') renderMessages();
+}
+
+function syncModeUI() {
+  const inp = document.getElementById('inp');
+  if (inp) inp.placeholder = currentMode === 'decide' ? DECIDE_PLACEHOLDER : RECOMMEND_PLACEHOLDER;
+  const modeSwitch = document.getElementById('modeSwitch');
+  if (modeSwitch) {
+    modeSwitch.querySelectorAll('.mode-switch-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.mode === currentMode);
+    });
+  }
+  updateGeoHintUI();
+}
+
+function setAppMode(mode) {
+  if (mode !== 'recommend' && mode !== 'decide') return;
+  if (mode === 'decide') {
+    openDecideStarter();
+    return;
+  }
+  const shouldRender = currentMode !== 'recommend' || decideStarterActive;
+  currentMode = 'recommend';
+  decideStarterActive = false;
+  clearDecideWheelTimer();
+  decideWheelSpinning = false;
+  syncModeUI();
+  if (currentView === 'chat' && shouldRender) renderMessages();
+}
+
+function cancelSessionRename() {
+  sessionRenamingId = null;
+  sessionRenameDraft = '';
+}
+
+function saveSessionRename(id) {
+  const session = sessions.find(s => s.id === id);
+  if (!session) return;
+  const nextTitle = sessionRenameDraft.trim();
+  if (nextTitle) session.title = nextTitle.slice(0, 40);
+  cancelSessionRename();
+  saveSessions();
+  renderSidebar();
+}
+
+function clampSidebarWidth(w) {
+  return Math.max(SIDEBAR_MIN_WIDTH, Math.min(SIDEBAR_MAX_WIDTH, w));
+}
+
+function loadSidebarWidth() {
+  try {
+    const raw = localStorage.getItem(SIDEBAR_WIDTH_KEY);
+    const parsed = raw ? parseInt(raw, 10) : 240;
+    sidebarWidth = clampSidebarWidth(Number.isFinite(parsed) ? parsed : 240);
+  } catch {
+    sidebarWidth = 240;
+  }
+}
+
+function applySidebarWidth() {
+  const sidebar = document.getElementById('sidebar');
+  if (!sidebar) return;
+  if (window.innerWidth < 900) {
+    sidebar.style.width = '';
+    return;
+  }
+  if (sidebar.classList.contains('collapsed')) {
+    sidebar.style.width = '0px';
+    return;
+  }
+  sidebar.style.width = `${clampSidebarWidth(sidebarWidth)}px`;
+}
+
+function saveSidebarWidth() {
+  try { localStorage.setItem(SIDEBAR_WIDTH_KEY, String(clampSidebarWidth(sidebarWidth))); } catch {}
+}
+
+function initSidebarResize() {
+  const resizer = document.getElementById('sidebarResizer');
+  const sidebar = document.getElementById('sidebar');
+  if (!resizer || !sidebar) return;
+
+  resizer.addEventListener('mousedown', e => {
+    if (window.innerWidth < 900) return;
+    if (sidebar.classList.contains('collapsed')) return;
+    isSidebarResizing = true;
+    document.body.classList.add('resizing-sidebar');
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!isSidebarResizing) return;
+    sidebarWidth = clampSidebarWidth(e.clientX);
+    applySidebarWidth();
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!isSidebarResizing) return;
+    isSidebarResizing = false;
+    document.body.classList.remove('resizing-sidebar');
+    saveSidebarWidth();
+  });
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth < 900 && isSidebarResizing) {
+      isSidebarResizing = false;
+      document.body.classList.remove('resizing-sidebar');
+    }
+    applySidebarWidth();
+  });
+}
+
+/* ── SESSION MANAGEMENT ── */
+function loadSessions() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    sessions = Array.isArray(parsed) ? parsed : [];
+  } catch {
+    sessions = [];
+  }
+}
+
+function saveSessions() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions)); } catch {}
+}
+
+function getCurrentSession() {
+  return sessions.find(s => s.id === currentSessionId) || null;
+}
+
+function createNewSession() {
+  cancelSessionRename();
+  decideStarterActive = false;
+  resetDecideStarter();
+  const session = {
+    id: 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+    title: '新对话',
+    messages: [],
+    sid: 'sid_' + Math.random().toString(36).substr(2, 9)
+  };
+  sessions.push(session);
+  saveSessions();
+  currentSessionId = session.id;
+  showChatView();
+  document.getElementById('inp').focus();
+}
+
+function switchSession(id) {
+  if (id === currentSessionId && currentView === 'chat') return;
+  cancelSessionRename();
+  decideStarterActive = false;
+  resetDecideStarter();
+  currentSessionId = id;
+  if (currentView !== 'chat') {
+    showChatView();
+  } else {
+    renderMessages();
+    renderSidebar();
+  }
+  if (window.innerWidth < 900) {
+    document.getElementById('sidebar').classList.remove('mobile-open');
+    document.getElementById('sidebarOverlay').classList.remove('visible');
+  }
+  document.getElementById('inp').focus();
+}
+
+function deleteSession(id) {
+  if (sessionRenamingId === id) cancelSessionRename();
+  const idx = sessions.findIndex(s => s.id === id);
+  if (idx === -1) return;
+  sessions.splice(idx, 1);
+  saveSessions();
+  if (id === currentSessionId) {
+    if (sessions.length > 0) {
+      currentSessionId = sessions[sessions.length - 1].id;
+      renderMessages();
+    } else {
+      createNewSession();
+      return;
+    }
+  }
+  renderSidebar();
+}
+
 function renderSidebar() {
   const list = document.getElementById('sidebarList');
+  if (!list) return;
   list.innerHTML = '';
-  [...sessions].reverse().forEach(s => {
+  [...sessions].reverse().forEach(session => {
     const item = document.createElement('div');
-    item.className = 'session-item' + (s.id === currentSessionId ? ' active' : '');
-    const title = document.createElement('span');
-    title.className = 'session-title';
-    title.textContent = s.title;
-    const del = document.createElement('button');
-    del.className = 'session-del';
-    del.textContent = '×';
-    del.title = '删除';
-    del.addEventListener('click', e => { e.stopPropagation(); deleteSession(s.id); });
-    item.appendChild(title);
-    item.appendChild(del);
-    item.addEventListener('click', () => switchSession(s.id));
+    item.className = 'session-item' + (session.id === currentSessionId ? ' active' : '');
+    const isEditing = sessionRenamingId === session.id;
+    if (isEditing) item.classList.add('editing');
+
+    if (isEditing) {
+      const input = document.createElement('input');
+      input.className = 'session-rename-input';
+      input.value = sessionRenameDraft || session.title || '';
+      input.maxLength = 40;
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.className = 'session-rename-cancel';
+      cancelBtn.textContent = '✕';
+      cancelBtn.title = '取消';
+      cancelBtn.addEventListener('click', e => { e.stopPropagation(); cancelSessionRename(); renderSidebar(); });
+
+      const saveBtn = document.createElement('button');
+      saveBtn.className = 'session-rename-save';
+      saveBtn.textContent = '✓';
+      saveBtn.title = '保存';
+      saveBtn.addEventListener('click', e => { e.stopPropagation(); saveSessionRename(session.id); });
+
+      input.addEventListener('input', () => { sessionRenameDraft = input.value; });
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); saveSessionRename(session.id); }
+        if (e.key === 'Escape') { e.preventDefault(); cancelSessionRename(); renderSidebar(); }
+      });
+      input.addEventListener('click', e => e.stopPropagation());
+
+      item.appendChild(input);
+      item.appendChild(cancelBtn);
+      item.appendChild(saveBtn);
+      setTimeout(() => { input.focus(); input.select(); }, 0);
+    } else {
+      const titleEl = document.createElement('span');
+      titleEl.className = 'session-title';
+      titleEl.textContent = session.title;
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'session-edit';
+      editBtn.textContent = '✎';
+      editBtn.title = '重命名对话';
+      editBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        sessionRenamingId = session.id;
+        sessionRenameDraft = session.title || '';
+        renderSidebar();
+      });
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'session-del';
+      delBtn.textContent = '×';
+      delBtn.title = '删除此对话';
+      delBtn.addEventListener('click', e => { e.stopPropagation(); deleteSession(session.id); });
+
+      item.appendChild(titleEl);
+      item.appendChild(editBtn);
+      item.appendChild(delBtn);
+      item.addEventListener('click', () => switchSession(session.id));
+    }
     list.appendChild(item);
   });
+  const favEntry = document.getElementById('favEntry');
+  if (favEntry) favEntry.classList.toggle('active', currentView === 'favorites');
 }
 
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  if (window.innerWidth < 900) {
+    sidebar.classList.toggle('mobile-open');
+    overlay.classList.toggle('visible');
+  } else {
+    sidebar.classList.toggle('collapsed');
+    applySidebarWidth();
+  }
+}
+
+/* ── RENDERING ── */
 function renderMessages() {
   const c = document.getElementById('chatWrap');
   c.innerHTML = '';
   const session = getCurrentSession();
-  if (!session || session.messages.length === 0) {
-    renderWelcome();
+  const shouldShowDecideStarter = currentMode === 'decide' && decideStarterActive;
+  if (!session || session.messages.length === 0 || shouldShowDecideStarter) {
+    if (currentMode === 'decide') ensureWheelOptions();
+    const welcome = document.createElement('div');
+    welcome.className = 'welcome';
+    const recommendActive = currentMode === 'recommend' ? ' active' : '';
+    const decideActive = currentMode === 'decide' ? ' active' : '';
+    const modeSub = currentMode === 'decide'
+      ? '不想想太多，选个状态，让觅食官帮你决定。'
+      : '告诉我你在哪座城市、想吃什么，或这顿饭是什么场景。';
+    const chips = currentMode === 'decide'
+      ? ''
+      : `<span class="chip chip-geo${geoStatus === 'requesting' ? ' is-loading' : ''}" data-geo-action="locate">${geoStatus === 'requesting' ? '📍 正在获取位置…' : '📍 使用当前位置'}</span>
+         ${RECOMMEND_WELCOME_CHIPS
+          .map(label => `<span class="chip" data-suggest="${esc(label)}">${esc(label)}</span>`)
+          .join('')}`;
+    const decideSummaryBits = [];
+    if (decideSelections.mealType !== '随便') decideSummaryBits.push(decideSelections.mealType);
+    if (decideSelections.mood !== '随便') decideSummaryBits.push(decideSelections.mood);
+    if (decideSelections.scene !== '不确定') decideSummaryBits.push(decideSelections.scene);
+    if (decideCustomOptions.length > 0) decideSummaryBits.push(`自定义 ${decideCustomOptions.length} 项`);
+    const decideSummaryText = decideSummaryBits.length > 0
+      ? `这一盘会优先按 <strong>${esc(decideSummaryBits.join(' · '))}</strong> 来生成，再从里面挑 6-8 个方向。`
+      : '还没筛条件的话，就先按当前默认命运签来一盘；你也可以加一点自己的偏爱。';
+    const decideFiltersHtml = DECIDE_FILTER_GROUPS.map(group => `
+      <div class="decide-filter-group">
+        <div class="decide-filter-label">${group.label}</div>
+        <div class="decide-filter-chips">
+          ${group.options.map(option => `
+            <button
+              type="button"
+              class="decide-filter-chip${decideSelections[group.key] === option ? ' active' : ''}"
+              data-decide-filter="${group.key}"
+              data-decide-value="${esc(option)}"
+            >${esc(option)}</button>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+    const wheelSegments = currentMode === 'decide'
+      ? decideWheelOptions.map((item, i) => {
+          const angle = (360 / decideWheelOptions.length) * i;
+          const active = !decideWheelSpinning && i === decideWheelHighlight ? ' active' : '';
+          return `<div class="decide-wheel-seg${active}" style="--a:${angle}deg;"><span>${esc(item.direction)}</span></div>`;
+        }).join('')
+      : '';
+    const decideWheelHtml = currentMode === 'decide' ? `
+      <div class="decide-wheel-card">
+        <div class="decide-wheel-head">命运签 · 今天吃什么</div>
+        <div class="decide-wheel-sub">先轻轻筛一下，再让命运签替你把范围收窄一点。</div>
+        <div class="decide-filter-panel">
+          ${decideFiltersHtml}
+        </div>
+        <div class="decide-wheel-summary">${decideSummaryText}</div>
+        <div class="decide-wheel-wrap">
+          <div class="decide-wheel-pointer"></div>
+          <div class="decide-wheel${decideWheelSpinning ? ' spinning' : ''}" style="transform: rotate(${decideWheelRotation}deg);">
+            ${wheelSegments}
+          </div>
+          <div class="decide-wheel-center">食</div>
+        </div>
+        <div class="decide-wheel-controls">
+          <button class="decide-cta-btn" data-decide-action="spin" ${decideWheelSpinning ? 'disabled' : ''}>${decideWheelSpinning ? '抽签中…' : '开始抽签'}</button>
+          <button class="decide-ghost-btn" data-decide-action="refresh-wheel" ${decideWheelSpinning ? 'disabled' : ''}>换一盘选项</button>
+        </div>
+        <div class="decide-custom-panel">
+          <div class="decide-custom-head">
+            <div class="decide-custom-title">加点你自己的选择</div>
+            <div class="decide-custom-sub">像云南菜、螺蛳粉、寿司这种，也可以一起放进签里。</div>
+          </div>
+          <div class="decide-custom-input-row">
+            <input class="decide-custom-input" id="decideCustomInput" type="text" maxlength="16" placeholder="输入一个你想加进去的选项">
+            <button class="decide-cta-btn decide-custom-add" type="button" data-decide-action="add-custom">添加</button>
+          </div>
+          <div class="decide-custom-list">
+            ${decideCustomOptions.length > 0
+              ? decideCustomOptions.map(option => `
+                <span class="decide-custom-chip">
+                  <span>${esc(option)}</span>
+                  <button type="button" class="decide-custom-remove" aria-label="删除 ${esc(option)}" data-decide-remove-custom="${esc(option)}">×</button>
+                </span>
+              `).join('')
+              : '<div class="decide-custom-empty">暂时还没加私藏选项，先用上面的筛选也可以。</div>'}
+          </div>
+        </div>
+      </div>
+    ` : '';
+    const decideGeoLabel = geoStatus === 'ready' && geoData ? guessGeoLabel(geoData) : '';
+    const hasDecideGeo = !!decideGeoLabel;
+    const decideFindLabel = hasDecideGeo && decideResult ? `按当前位置找${decideResult.direction}` : (decideResult ? `📍 使用当前位置找${decideResult.direction}` : '📍 使用当前位置找这类餐厅');
+    const decideManualLabel = hasDecideGeo ? '改用其他城市' : (decideResult ? '输入其他城市' : '输入城市');
+    const decideFlowHint = hasDecideGeo
+      ? `已获取默认位置：${decideGeoLabel}，你也可以随时改用其他城市。`
+      : (geoStatus === 'requesting'
+          ? '正在获取位置授权，通过后可直接按当前位置找店。'
+          : '还没有位置信息。可先用当前位置找店，或手动输入其他城市。');
+    const decideResultHtml = currentMode === 'decide' && decideResult ? `
+      <div class="decide-result-card">
+        <div class="decide-result-eyebrow">命运签结果</div>
+        <div class="decide-result-title">${esc(decideResult.text)}</div>
+        <div class="decide-result-direction">方向：${esc(decideResult.direction)}</div>
+        <div class="decide-result-sub">${esc(decideResult.note)} ${esc(decideFlowHint)}</div>
+        <div class="decide-result-actions">
+          <button class="decide-cta-btn" data-decide-action="find">${esc(decideFindLabel)}</button>
+          <button class="decide-ghost-btn" data-decide-action="manual-city">${esc(decideManualLabel)}</button>
+          <button class="decide-ghost-btn" data-decide-action="reroll">再试一次</button>
+        </div>
+      </div>
+    ` : '';
+    welcome.innerHTML = `
+      <div class="welcome-eyebrow">美食探店助手</div>
+      <h2>你好，欢迎来觅食。</h2>
+      <div class="home-entry-grid">
+        <div class="home-entry-card${recommendActive}" data-mode-card="recommend">
+          <div class="home-entry-title">推荐餐厅</div>
+          <div class="home-entry-sub">输入城市、口味或场景，帮你筛出更适合的一餐。</div>
+        </div>
+        <div class="home-entry-card${decideActive}" data-mode-card="decide">
+          <div class="home-entry-title">今天吃什么</div>
+          <div class="home-entry-sub">不想想太多，选个状态，让觅食官帮你决定。</div>
+        </div>
+      </div>
+      <p class="welcome-mode-sub">${modeSub}</p>
+      ${decideWheelHtml}
+      ${decideResultHtml}
+      ${chips ? `<div class="chips">${chips}</div>` : ''}
+    `;
+    welcome.querySelectorAll('[data-mode-card]').forEach(card => {
+      card.addEventListener('click', () => setAppMode(card.dataset.modeCard));
+    });
+    welcome.querySelectorAll('.chip').forEach(chip => {
+      if (chip.dataset.suggest) {
+        chip.addEventListener('click', () => suggest(chip.dataset.suggest));
+      }
+    });
+    welcome.querySelectorAll('[data-geo-action="locate"]').forEach(btn => {
+      btn.addEventListener('click', requestGeolocation);
+    });
+    welcome.querySelectorAll('[data-decide-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (decideWheelSpinning) return;
+        setDecideSelection(btn.dataset.decideFilter, btn.dataset.decideValue);
+      });
+    });
+    const decideCustomInput = welcome.querySelector('#decideCustomInput');
+    const submitCustomOption = () => {
+      if (!decideCustomInput) return;
+      const added = addCustomDecideOption(decideCustomInput.value);
+      if (added) {
+        decideCustomInput.value = '';
+        if (currentView === 'chat' && decideStarterActive) renderMessages();
+      }
+    };
+    if (decideCustomInput) {
+      decideCustomInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          submitCustomOption();
+        }
+      });
+    }
+    welcome.querySelectorAll('[data-decide-remove-custom]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (decideWheelSpinning) return;
+        removeCustomDecideOption(btn.dataset.decideRemoveCustom);
+        if (currentView === 'chat' && decideStarterActive) renderMessages();
+      });
+    });
+    welcome.querySelectorAll('[data-decide-action]').forEach(btn => {
+      if (btn.dataset.decideAction === 'spin') {
+        btn.addEventListener('click', () => runDecideWheel(welcome));
+      }
+      if (btn.dataset.decideAction === 'add-custom') {
+        btn.addEventListener('click', submitCustomOption);
+      }
+      if (btn.dataset.decideAction === 'refresh-wheel') {
+        btn.addEventListener('click', () => {
+          updateDecideWheelFromCurrentState();
+          renderMessages();
+        });
+      }
+      if (btn.dataset.decideAction === 'find') {
+        btn.addEventListener('click', () => {
+          if (!decideResult) return;
+          if (geoStatus === 'ready' && geoData) {
+            if (btn.dataset.locked === '1') return;
+            btn.dataset.locked = '1';
+            btn.disabled = true;
+            const userPrompt = buildFindByCuisineUserPrompt(decideResult);
+            const nextTask = { type: 'strictLocalCuisine', direction: decideResult.direction, geoSnapshot: cloneGeoSnapshot() };
+            decideStarterActive = false;
+            decideResult = null;
+            setAppMode('recommend');
+            suggest(userPrompt, nextTask);
+            return;
+          }
+          if (geoStatus === 'requesting') return;
+          if (btn.dataset.locked === '1') return;
+          btn.dataset.locked = '1';
+          btn.disabled = true;
+          requestGeolocation({
+            onSuccess: () => {
+              if (!decideResult) return;
+              const userPrompt = buildFindByCuisineUserPrompt(decideResult);
+              const nextTask = { type: 'strictLocalCuisine', direction: decideResult.direction, geoSnapshot: cloneGeoSnapshot() };
+              decideStarterActive = false;
+              decideResult = null;
+              setAppMode('recommend');
+              suggest(userPrompt, nextTask);
+            },
+            onError: () => {
+              btn.dataset.locked = '0';
+              btn.disabled = false;
+            }
+          });
+        });
+      }
+      if (btn.dataset.decideAction === 'manual-city') {
+        btn.addEventListener('click', () => {
+          if (!decideResult) return;
+          decideStarterActive = false;
+          setAppMode('recommend');
+          prefillManualCityPromptByDecide(decideResult);
+        });
+      }
+      if (btn.dataset.decideAction === 'reroll') {
+        btn.addEventListener('click', () => runDecideWheel(welcome));
+      }
+    });
+    c.appendChild(welcome);
     return;
   }
   session.messages.forEach(msg => {
@@ -3167,28 +4226,6 @@ function renderMessages() {
     else appendBotBubbles(msg.text);
   });
   scroll();
-}
-
-function renderWelcome() {
-  const c = document.getElementById('chatWrap');
-  c.innerHTML = '';
-  const welcome = document.createElement('div');
-  welcome.className = 'welcome';
-  welcome.innerHTML = `
-    <div class="welcome-eyebrow">觅食官 · Demo</div>
-    <h2>找到真正适合你的那家</h2>
-    <p class="welcome-mode-sub">不是评分最高，而是最符合此刻的你</p>
-    <div class="chips" id="welcomeChips"></div>
-  `;
-  c.appendChild(welcome);
-  const chipsEl = welcome.querySelector('#welcomeChips');
-  WELCOME_CHIPS.forEach(label => {
-    const chip = document.createElement('span');
-    chip.className = 'chip';
-    chip.textContent = label;
-    chip.addEventListener('click', () => suggest(label));
-    chipsEl.appendChild(chip);
-  });
 }
 
 function appendUserBubble(text) {
@@ -3201,12 +4238,16 @@ function appendUserBubble(text) {
 
 function appendBotBubbles(text) {
   const c = document.getElementById('chatWrap');
+  const { cleanText } = extractHiddenRestaurantMeta(text);
   const { restaurants, others } = parseRestaurants(text);
+
   const row = document.createElement('div');
   row.className = 'msg-row';
   row.style.alignItems = 'flex-start';
+
   const av = document.createElement('div');
   av.className = 'av'; av.textContent = '觅';
+
   const wrap = document.createElement('div');
   wrap.className = 'bot-wrap';
 
@@ -3218,8 +4259,19 @@ function appendBotBubbles(text) {
       p.innerHTML = t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
       wrap.appendChild(p);
     });
+
     const group = document.createElement('div');
     group.className = 'restaurant-group';
+
+    const groupHeader = document.createElement('div');
+    groupHeader.className = 'restaurant-group-header';
+    const shareBtn = document.createElement('button');
+    shareBtn.className = 'share-group-btn';
+    shareBtn.textContent = '↗ 分享';
+    shareBtn.addEventListener('click', () => openSharePanel(restaurants));
+    groupHeader.appendChild(shareBtn);
+    group.appendChild(groupHeader);
+
     const grid = document.createElement('div');
     grid.className = 'cards-grid';
     restaurants.forEach((r, i) => {
@@ -3260,12 +4312,55 @@ function appendBotBubbles(text) {
     }
     wrap.appendChild(group);
   } else {
+    const merged = (others.length ? others.join('\n\n') : cleanText).trim();
     const p = document.createElement('div');
     p.className = 'plain-bubble';
-    p.innerHTML = text.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    p.innerHTML = merged.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
     wrap.appendChild(p);
   }
-  row.appendChild(av); row.appendChild(wrap);
+
+  row.appendChild(av);
+  row.appendChild(wrap);
+  c.appendChild(row);
+}
+
+function appendErrorBubble(errorType, lastUserText, lastApiText, lastApiTask) {
+  const c = document.getElementById('chatWrap');
+  const row = document.createElement('div');
+  row.className = 'msg-row';
+  row.style.alignItems = 'flex-start';
+
+  const av = document.createElement('div');
+  av.className = 'av'; av.textContent = '觅';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'bot-wrap';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'error-bubble';
+
+  const isNetwork = errorType === 'network';
+  const titleEl = document.createElement('div');
+  titleEl.className = 'error-title';
+  titleEl.textContent = isNetwork ? '网络好像出了点问题' : '请求太快啦，稍等几秒～';
+
+  const subEl = document.createElement('div');
+  subEl.className = 'error-sub';
+  subEl.textContent = isNetwork
+    ? '请检查网络连接后重试'
+    : '每次对话会消耗较多资源，请等几秒后重试';
+
+  const retryBtn = document.createElement('button');
+  retryBtn.className = 'error-retry';
+  retryBtn.textContent = '重新发送';
+  retryBtn.addEventListener('click', () => resendRequest(lastUserText, lastApiText, lastApiTask));
+
+  bubble.appendChild(titleEl);
+  bubble.appendChild(subEl);
+  bubble.appendChild(retryBtn);
+  wrap.appendChild(bubble);
+  row.appendChild(av);
+  row.appendChild(wrap);
   c.appendChild(row);
 }
 
@@ -3276,16 +4371,680 @@ function showTyping() {
   d.innerHTML = `<div class="av">觅</div><div class="bot-wrap"><div class="plain-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div></div>`;
   c.appendChild(d); scroll();
 }
+
 function hideTyping() {
   const e = document.getElementById('typ'); if (e) e.remove();
 }
 
-function appendFollowUpChips(key, sessionId) {
-  const chips = FOLLOW_UP_CHIPS[key];
-  if (!chips) return;
-  const c = document.getElementById('chatWrap');
-  const botWraps = c.querySelectorAll('.bot-wrap');
-  if (!botWraps.length) return;
+/* ── RESTAURANT PARSING ── */
+function parseRestaurants(text) {
+  const { cleanText } = extractHiddenRestaurantMeta(text);
+  const blocks = cleanText.split(/(?=🍽️)/);
+  const restaurants = [], others = [];
+  blocks.forEach(b => {
+    b = b.trim(); if (!b) return;
+    if (b.startsWith('🍽️')) {
+      const nm = b.match(/🍽️\s*\*?\*?([^\n*]+)\*?\*?/);
+      const rt = b.match(/⭐\s*([\d.]+)(?:\s*[（(]([^)）]+)[)）])?/);
+      const ad = b.match(/📍\s*([^\n]+)/);
+      const hr = b.match(/🕐\s*([^\n]+)/);
+      const qt = b.match(/💬\s*([^\n]+)/);
+      const lk = b.match(/\[([^\]]*(?:Google Maps|查看)[^\]]*)\]\((https?:\/\/[^\)]+)\)/i);
+      const suitableReason = matchRestaurantField(b, ['适合你']);
+      const warmRecommendation = matchRestaurantField(b, ['一句有温度的推荐语', '推荐语']);
+      const reviewSignal = matchRestaurantField(b, ['小提醒']);
+      if (nm) {
+        const name = nm[1].trim();
+        restaurants.push({
+          name,
+          rating: rt ? rt[1] : null,
+          ratingCount: rt && rt[2] ? rt[2].trim() : null,
+          address: ad ? ad[1].trim() : null,
+          hours: hr ? hr[1].trim() : null,
+          quote: qt ? qt[1].trim() : null,
+          suitableReason,
+          warmRecommendation,
+          reviewSignal,
+          mapUrl: lk ? lk[2] : null,
+        });
+      }
+    } else {
+      others.push(b);
+    }
+  });
+  return { restaurants, others };
+}
+
+function starStr(r) {
+  if (!r) return '';
+  const n = parseFloat(r), f = Math.floor(n);
+  return '★'.repeat(f) + (n%1>=0.5?'½':'') + '☆'.repeat(5-f-(n%1>=0.5?1:0));
+}
+
+function matchRestaurantField(block, labels) {
+  for (const label of labels) {
+    const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = block.match(new RegExp(`(?:^|\\n)${escaped}\\s*[：:]\\s*([^\\n]+)`));
+    if (match && match[1]) return match[1].trim();
+  }
+  return null;
+}
+
+function renderRestaurantRating(restaurant) {
+  if (!restaurant || !restaurant.rating) return '';
+  return `
+    <div class="card-rating">
+      <span class="card-stars">${starStr(restaurant.rating)}</span>
+      <span class="card-score">&thinsp;${esc(restaurant.rating)} 分</span>
+      ${restaurant.ratingCount ? `<span class="card-rating-count">(${esc(restaurant.ratingCount)})</span>` : ''}
+    </div>
+  `;
+}
+
+function renderRestaurantReasoning(restaurant) {
+  if (!restaurant) return '';
+  const warmText = restaurant.warmRecommendation || restaurant.quote;
+  const parts = [];
+  if (restaurant.suitableReason) {
+    parts.push(`
+      <div class="card-suitable">
+        <div class="card-suitable-label">适合你</div>
+        <div class="card-suitable-text">${esc(restaurant.suitableReason)}</div>
+      </div>
+    `);
+  }
+  if (warmText) {
+    parts.push(`<div class="card-story">${esc(warmText)}</div>`);
+  } else if (restaurant.quote) {
+    parts.push(`<div class="card-quote">${esc(restaurant.quote)}</div>`);
+  }
+  if (restaurant.reviewSignal) {
+    parts.push(`<div class="card-note"><span class="card-note-label">小提醒</span>${esc(restaurant.reviewSignal)}</div>`);
+  }
+  return parts.length ? `<div class="card-reasoning">${parts.join('')}</div>` : '';
+}
+
+function extractHiddenRestaurantMeta(text) {
+  const raw = String(text || '');
+  const match = raw.match(/<!--MSH_META\s*([\s\S]*?)\s*MSH_META-->/);
+  const cleanText = raw.replace(/<!--MSH_META[\s\S]*?MSH_META-->/g, '').trim();
+  if (!match) return { cleanText, metadata: [] };
+  try {
+    const parsed = JSON.parse(match[1].trim());
+    return { cleanText, metadata: Array.isArray(parsed) ? parsed : [] };
+  } catch {
+    return { cleanText, metadata: [] };
+  }
+}
+
+/* ── FAV POPOVER ── */
+function openFavPopover(restaurant) {
+  _favPopoverRestaurant = restaurant;
+  document.getElementById('favPanelSub').textContent = restaurant.name || '';
+  renderFavPopover();
+  document.getElementById('favOverlay').classList.add('open');
+  document.getElementById('favNewInput').value = '';
+}
+
+function closeFavPopover() {
+  document.getElementById('favOverlay').classList.remove('open');
+  _favPopoverRestaurant = null;
+  refreshAllCardFavStates();
+}
+
+function renderFavPopover() {
+  const r = _favPopoverRestaurant; if (!r) return;
+  const f = loadFavs();
+  const checked = getRestaurantCollections(r.name, r.address);
+  const allColls = Object.keys(f);
+  const listEl = document.getElementById('favCollsList');
+  listEl.innerHTML = '';
+  if (allColls.length === 0) {
+    const hint = document.createElement('div');
+    hint.className = 'fav-empty-hint';
+    hint.textContent = '还没有合集，请先新建一个';
+    listEl.appendChild(hint);
+    return;
+  }
+  allColls.forEach(coll => {
+    const isChecked = checked.includes(coll);
+    const item = document.createElement('div');
+    item.className = 'fav-coll-item' + (isChecked ? ' checked' : '');
+    item.innerHTML = `
+      <div class="fav-coll-check">${isChecked ? '✓' : ''}</div>
+      <span class="fav-coll-label">${esc(coll)}</span>
+      <span class="fav-coll-count-badge">${f[coll].length}</span>
+    `;
+    item.addEventListener('click', () => {
+      const nowChecked = item.classList.contains('checked');
+      setRestaurantInCollection(r, coll, !nowChecked);
+      renderFavPopover();
+      if (!nowChecked) showFavHint(`已收藏到「${coll}」`);
+    });
+    listEl.appendChild(item);
+  });
+}
+
+function initFavPopover() {
+  document.getElementById('favOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('favOverlay')) closeFavPopover();
+  });
+  document.getElementById('favNewBtn').addEventListener('click', doAddNewCollection);
+  document.getElementById('favNewInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doAddNewCollection();
+  });
+  document.getElementById('favPanelClose').addEventListener('click', closeFavPopover);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('favOverlay').classList.contains('open')) closeFavPopover();
+  });
+  document.getElementById('favEntry').addEventListener('click', () => {
+    if (currentView === 'favorites') showChatView(); else showFavView();
+  });
+}
+
+function doAddNewCollection() {
+  const inp = document.getElementById('favNewInput');
+  const name = inp.value.trim();
+  if (!name || !_favPopoverRestaurant) return;
+  const added = addToNewCollection(name, _favPopoverRestaurant);
+  inp.value = '';
+  renderFavPopover();
+  if (added) showFavHint(`已收藏到「${name}」`);
+  else showFavHint(`「${name}」里已存在这家店`);
+}
+
+function refreshAllCardFavStates() {
+  document.querySelectorAll('.fav-btn').forEach(btn => {
+    const saved = isFavorited(btn.dataset.name, btn.dataset.address);
+    btn.classList.toggle('saved', saved);
+    btn.textContent = saved ? '♥' : '♡';
+    btn.title = saved ? '已收藏' : '收藏';
+  });
+}
+
+function showFavHint(msg) {
+  let hint = document.getElementById('favHint');
+  if (!hint) {
+    hint = document.createElement('div');
+    hint.id = 'favHint';
+    hint.className = 'fav-hint';
+    document.body.appendChild(hint);
+  }
+  hint.textContent = msg;
+  hint.classList.add('show');
+  clearTimeout(hint._timer);
+  hint._timer = setTimeout(() => { hint.classList.remove('show'); }, 1800);
+}
+
+function cancelCollectionRename() {
+  favRenamingCollection = null;
+  favRenameDraft = '';
+  renderFavView();
+}
+
+function submitCollectionRename(collName) {
+  const oldName = collName;
+  const newName = favRenameDraft.trim();
+  if (!newName) {
+    showFavHint('合集名不能为空');
+    return;
+  }
+  if (newName === oldName) {
+    cancelCollectionRename();
+    return;
+  }
+  const f = loadFavs();
+  if (Object.prototype.hasOwnProperty.call(f, newName)) {
+    showFavHint('已有同名合集');
+    return;
+  }
+  f[newName] = f[oldName] || [];
+  delete f[oldName];
+  saveFavs(f);
+  const meta = loadCollectionMeta();
+  const oldMetaKey = buildCollectionMetaKey('collection', oldName);
+  const newMetaKey = buildCollectionMetaKey('collection', newName);
+  if (meta[oldMetaKey]) {
+    meta[newMetaKey] = meta[oldMetaKey];
+    delete meta[oldMetaKey];
+    saveCollectionMeta(meta);
+  }
+  if (favExpandedCollection === oldName) favExpandedCollection = newName;
+  if (favPendingDeleteCollection === oldName) favPendingDeleteCollection = null;
+  favRenamingCollection = null;
+  favRenameDraft = '';
+  renderFavView();
+  showFavHint(`合集已改名为「${newName}」`);
+}
+
+function renderCollectionMetaEditor(metaKey, fallbackTitle) {
+  if (favMetaEditingKey !== metaKey) return '';
+  const meta = {
+    title: favMetaDraftTitle || fallbackTitle,
+    cover: favMetaDraftCover || pickDefaultCoverId(metaKey),
+    coverImage: favMetaDraftImage || ''
+  };
+  const cover = getCoverPresetById(meta.cover);
+  const previewLabel = metaKey.startsWith('city:') ? getCityCoverLabel(fallbackTitle) : getCollectionCoverLabel(meta.title || fallbackTitle);
+  return `
+    <div class="fav-meta-editor">
+      <div class="fav-meta-preview" style="${buildCoverStyle(meta, cover)}">
+        <div class="fav-meta-preview-copy">
+          <div class="fav-meta-preview-eyebrow">${metaKey.startsWith('city:') ? '城市封面' : '合集封面'}</div>
+          <div class="fav-meta-preview-title">${esc(previewLabel)}</div>
+        </div>
+        ${meta.coverImage ? '' : `<div class="fav-meta-preview-emoji">${cover.emoji}</div>`}
+      </div>
+      <input class="fav-meta-input" type="text" maxlength="30" value="${esc(favMetaDraftTitle || fallbackTitle)}" data-meta-title-input="${esc(metaKey)}" data-meta-fallback="${esc(fallbackTitle)}" placeholder="给这张卡片起个名字">
+      <div class="fav-meta-upload-row">
+        <label class="fav-upload-btn" for="metaUpload_${esc(metaKey).replace(/[^a-zA-Z0-9_-]/g, '_')}">上传图片</label>
+        <input class="fav-upload-input" id="metaUpload_${esc(metaKey).replace(/[^a-zA-Z0-9_-]/g, '_')}" type="file" accept="image/*" data-meta-upload="${esc(metaKey)}" data-meta-fallback="${esc(fallbackTitle)}">
+        ${favMetaDraftImage ? `<button class="fav-upload-remove" type="button" data-meta-remove-image="${esc(metaKey)}" data-meta-fallback="${esc(fallbackTitle)}">移除图片</button>` : ''}
+      </div>
+      <div class="fav-meta-hint">支持本地图片，建议 1.5MB 以内。</div>
+      <div class="fav-cover-options">
+        ${FAV_COVER_PRESETS.map(preset => `
+          <button type="button" class="fav-cover-chip${favMetaDraftCover === preset.id ? ' active' : ''}" data-meta-cover="${preset.id}">
+            <span class="fav-cover-dot" style="background:${preset.gradient};"></span>
+            <span class="fav-cover-name">${preset.emoji} ${preset.label}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div class="fav-city-card-actions">
+        <button class="fav-card-ghost-btn" type="button" data-meta-cancel>取消</button>
+        <button class="fav-card-btn" type="button" data-meta-save="${esc(metaKey)}" data-meta-fallback="${esc(fallbackTitle)}">保存标题和封面</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderFavoriteRows(list, options = {}) {
+  const removeMode = options.removeMode || 'collection';
+  const sourceKey = options.sourceKey || '';
+  return list.map(r => `
+    <div class="fav-rest-row">
+      <div class="fav-rest-info">
+        <div class="fav-rest-name">${esc(r.name)}</div>
+        <div class="fav-rest-meta">${r.rating ? `⭐ ${esc(r.rating)} 分` : ''}${r.rating && r.address ? '  ·  ' : ''}${r.address ? `📍 ${esc(r.address)}` : ''}</div>
+        ${r.collections && removeMode === 'global' ? `<div class="fav-rest-tagline">${r.collections.map(coll => `<span class="fav-rest-mini-tag">${esc(coll)}</span>`).join('')}</div>` : ''}
+        ${r.mapUrl ? `<a class="fav-rest-link" href="${r.mapUrl}" target="_blank">查看地图 →</a>` : ''}
+      </div>
+      <button class="fav-rest-del" title="${removeMode === 'global' ? '从全部收藏移除' : '从此合集移除'}" data-fav-remove="${removeMode}" data-fav-source="${esc(sourceKey)}" data-fav-name="${esc(r.name || '')}" data-fav-address="${esc(r.address || '')}">×</button>
+    </div>
+  `).join('');
+}
+
+function renderCityCollections(groups) {
+  if (groups.length === 0) return '';
+  return `
+    <div class="fav-block">
+      <div class="fav-section-head">
+        <div>
+          <div class="fav-section-title">城市合集</div>
+          <div class="fav-section-sub">按城市收好，下次出发前直接翻。</div>
+        </div>
+      </div>
+      <div class="fav-city-grid">
+        ${groups.map((group, index) => {
+          const meta = getDisplayMeta(group.key, group.city);
+          const cover = getCoverPresetById(meta.cover);
+          const preview = group.items.slice(0, 3).map(item => item.name).join(' · ');
+          const active = favExpandedCity === group.key ? ' active' : '';
+          return `
+            <div class="fav-city-card${active}" style="animation-delay:${(index * 0.04).toFixed(2)}s;">
+              <div class="fav-city-cover" style="${buildCoverStyle(meta, cover)}">
+                <div class="fav-city-cover-badge"><strong>${group.count}</strong><span>家收藏</span></div>
+                ${meta.coverImage ? '' : `<div class="fav-city-cover-emoji">${cover.emoji}</div>`}
+              </div>
+              <div class="fav-city-card-name">${esc(meta.title)}</div>
+              <div class="fav-city-card-meta">
+                <span class="fav-city-card-count">${group.count} 家</span>
+                <span class="fav-city-card-tag">${esc(group.city)}</span>
+              </div>
+              <div class="fav-city-card-preview">${preview ? esc(preview) : '这座城市的收藏会在这里慢慢长出来。'}</div>
+              <div class="fav-city-card-actions">
+                <button class="fav-card-btn" type="button" data-city-focus="${esc(group.key)}">${favExpandedCity === group.key ? '收起详情' : '查看详情'}</button>
+                <button class="fav-card-ghost-btn" type="button" data-meta-open="${esc(group.key)}" data-meta-fallback="${esc(group.city)}">修改标题和封面</button>
+              </div>
+              ${renderCollectionMetaEditor(group.key, group.city)}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderExpandedCityDetail(groups) {
+  const group = groups.find(item => item.key === favExpandedCity);
+  if (!group) return '';
+  const meta = getDisplayMeta(group.key, group.city);
+  const cover = getCoverPresetById(meta.cover);
+  return `
+    <div class="fav-detail-panel" id="favCityDetail">
+      <div class="fav-detail-hero" style="${buildCoverStyle(meta, cover)}">
+        <div class="fav-detail-eyebrow">City Collection</div>
+        <div class="fav-detail-title">${esc(meta.title)}</div>
+        <div class="fav-detail-sub">${esc(group.city)} · ${group.count} 家</div>
+      </div>
+      <div class="fav-detail-list">
+        ${group.items.length > 0 ? renderFavoriteRows(group.items, { removeMode: 'global', sourceKey: group.key }) : '<div class="fav-detail-empty">这座城市里还没有收藏。</div>'}
+      </div>
+    </div>
+  `;
+}
+
+function renderCustomCollectionsSection(favs) {
+  const colls = Object.keys(favs).filter(c => favs[c].length > 0);
+  if (colls.length === 0) return '';
+  return `
+    <div class="fav-block">
+      <div class="fav-section-head">
+        <div>
+          <div class="fav-section-title">我的合集</div>
+          <div class="fav-section-sub">你自己整理的口味清单。</div>
+        </div>
+      </div>
+      ${colls.map(collName => {
+        const list = favs[collName];
+        const metaKey = buildCollectionMetaKey('collection', collName);
+        const meta = getDisplayMeta(metaKey, collName);
+        const cover = getCoverPresetById(meta.cover);
+        const coverLabel = getCollectionCoverLabel(meta.title || collName);
+        const isExpanded = favExpandedCollection === collName;
+        const isPendingDelete = favPendingDeleteCollection === collName;
+        const isRenaming = favRenamingCollection === collName;
+        return `
+          <div class="fav-coll-section${isExpanded ? ' expanded' : ''}">
+            <div class="fav-coll-header">
+              <div class="fav-city-cover" style="${buildCoverStyle(meta, cover)}width:86px;height:86px;flex-shrink:0;margin-bottom:0;">
+                <div>
+                  <div class="fav-city-cover-mark">${esc(coverLabel)}</div>
+                </div>
+                ${meta.coverImage ? '' : `<div class="fav-city-cover-emoji">${cover.emoji}</div>`}
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div class="fav-coll-name">${esc(meta.title)}</div>
+                <div class="fav-section-sub" style="margin-top:4px;">${list.slice(0, 3).map(item => esc(item.name)).join(' · ') || '慢慢把想吃的店收进来。'}</div>
+              </div>
+              <span class="fav-coll-badge">${list.length} 家</span>
+              <button class="fav-coll-edit-btn" title="重命名合集" data-coll-rename="${esc(collName)}">✎</button>
+              <button class="fav-coll-edit-btn" title="修改封面" data-meta-open="${esc(metaKey)}" data-meta-fallback="${esc(collName)}">☰</button>
+              <button class="fav-coll-del-btn" title="删除整个合集" data-coll-delete="${esc(collName)}">×</button>
+              <span class="fav-coll-toggle">▾</span>
+            </div>
+            ${renderCollectionMetaEditor(metaKey, collName)}
+            ${isRenaming ? `
+              <div class="fav-coll-rename-row">
+                <input class="fav-coll-rename-input" maxlength="30" value="${esc(favRenameDraft || collName)}" data-coll-rename-input="${esc(collName)}" />
+                <button class="fav-coll-rename-cancel" data-coll-rename-cancel>取消</button>
+                <button class="fav-coll-rename-save" data-coll-rename-save="${esc(collName)}">保存</button>
+              </div>
+            ` : ''}
+            ${isExpanded ? renderFavoriteRows(list, { removeMode: 'collection', sourceKey: collName }) : ''}
+            ${isPendingDelete ? `
+              <div class="fav-coll-delete-confirm">
+                <div class="fav-coll-delete-text">确认删除合集「${esc(collName)}」吗？</div>
+                <div class="fav-coll-delete-actions">
+                  <button class="fav-coll-cancel-btn" data-coll-delete-cancel>取消</button>
+                  <button class="fav-coll-confirm-btn" data-coll-delete-confirm="${esc(collName)}">确认删除</button>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+/* ── VIEW SWITCHING ── */
+function showChatView() {
+  currentView = 'chat';
+  document.getElementById('chatWrap').style.display = '';
+  document.getElementById('inputBar').style.display = '';
+  document.getElementById('favView').classList.remove('active');
+  syncModeUI();
+  renderMessages();
+  renderSidebar();
+}
+
+function showFavView() {
+  currentView = 'favorites';
+  clearDecideWheelTimer();
+  decideWheelSpinning = false;
+  favExpandedCollection = null;
+  favPendingDeleteCollection = null;
+  favRenamingCollection = null;
+  favRenameDraft = '';
+  favExpandedCity = null;
+  closeCollectionMetaEditor();
+  document.getElementById('chatWrap').style.display = 'none';
+  document.getElementById('inputBar').style.display = 'none';
+  document.getElementById('favView').classList.add('active');
+  renderFavView();
+  renderSidebar();
+}
+
+function renderFavView() {
+  const el = document.getElementById('favView');
+  const f = loadFavs();
+  const colls = Object.keys(f).filter(c => f[c].length > 0);
+  const cityGroups = groupFavoritesByCity(f);
+  const activeMetaKeys = [
+    ...cityGroups.map(group => group.key),
+    ...colls.map(collName => buildCollectionMetaKey('collection', collName))
+  ];
+  clearUnusedCollectionMeta(activeMetaKeys);
+  if (favExpandedCollection && !colls.includes(favExpandedCollection)) favExpandedCollection = null;
+  if (favPendingDeleteCollection && !colls.includes(favPendingDeleteCollection)) favPendingDeleteCollection = null;
+  if (favRenamingCollection && !colls.includes(favRenamingCollection)) {
+    favRenamingCollection = null;
+    favRenameDraft = '';
+  }
+  if (favExpandedCity && !cityGroups.some(group => group.key === favExpandedCity)) favExpandedCity = null;
+  if (favMetaEditingKey && !activeMetaKeys.includes(favMetaEditingKey)) closeCollectionMetaEditor();
+  el.innerHTML = `<div class="fav-view-title">我的收藏</div><div class="fav-view-sub">把想吃、吃过、还想再去的地方，慢慢存成自己的清单。</div>`;
+  if (colls.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'fav-empty-state';
+    empty.innerHTML = `<div class="fav-empty-icon">🍽️</div><div class="fav-empty-title">还没有收藏</div><div class="fav-empty-sub">遇到想去的店，就先收起来。</div>`;
+    el.appendChild(empty);
+    return;
+  }
+  el.innerHTML += renderExpandedCityDetail(cityGroups);
+  el.innerHTML += renderCityCollections(cityGroups);
+  el.innerHTML += renderCustomCollectionsSection(f);
+
+  el.querySelectorAll('[data-city-focus]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      favExpandedCity = favExpandedCity === btn.dataset.cityFocus ? null : btn.dataset.cityFocus;
+      renderFavView();
+      const detail = document.getElementById('favCityDetail');
+      if (detail) detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+
+  el.querySelectorAll('[data-meta-open]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      openCollectionMetaEditor(btn.dataset.metaOpen, btn.dataset.metaFallback);
+      renderFavView();
+    });
+  });
+
+  el.querySelectorAll('[data-meta-title-input]').forEach(input => {
+    input.addEventListener('input', () => { favMetaDraftTitle = input.value; });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') submitCollectionMeta(input.dataset.metaTitleInput, input.dataset.metaFallback || '');
+      if (e.key === 'Escape') { closeCollectionMetaEditor(); renderFavView(); }
+    });
+  });
+
+  el.querySelectorAll('[data-meta-cover]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      favMetaDraftCover = btn.dataset.metaCover;
+      renderFavView();
+    });
+  });
+
+  el.querySelectorAll('[data-meta-cancel]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      closeCollectionMetaEditor();
+      renderFavView();
+    });
+  });
+
+  el.querySelectorAll('[data-meta-save]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      submitCollectionMeta(btn.dataset.metaSave, btn.dataset.metaFallback);
+    });
+  });
+
+  el.querySelectorAll('[data-meta-upload]').forEach(input => {
+    input.addEventListener('change', () => {
+      const file = input.files && input.files[0];
+      handleCollectionCoverUpload(input.dataset.metaUpload, input.dataset.metaFallback, file);
+    });
+  });
+
+  el.querySelectorAll('[data-meta-remove-image]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      removeCollectionCoverImage(btn.dataset.metaRemoveImage, btn.dataset.metaFallback);
+    });
+  });
+
+  el.querySelectorAll('.fav-coll-header').forEach(header => {
+    header.addEventListener('click', e => {
+      if (e.target.closest('button')) return;
+      const collName = header.querySelector('[data-coll-rename]')?.dataset.collRename;
+      if (!collName) return;
+      favExpandedCollection = favExpandedCollection === collName ? null : collName;
+      favPendingDeleteCollection = null;
+      favRenamingCollection = null;
+      favRenameDraft = '';
+      renderFavView();
+    });
+  });
+
+  el.querySelectorAll('[data-coll-rename]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      favRenamingCollection = btn.dataset.collRename;
+      favRenameDraft = btn.dataset.collRename;
+      favPendingDeleteCollection = null;
+      renderFavView();
+    });
+  });
+
+  el.querySelectorAll('[data-coll-delete]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      favPendingDeleteCollection = btn.dataset.collDelete;
+      favRenamingCollection = null;
+      favRenameDraft = '';
+      renderFavView();
+    });
+  });
+
+  el.querySelectorAll('[data-coll-rename-input]').forEach(input => {
+    input.addEventListener('input', () => { favRenameDraft = input.value; });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') submitCollectionRename(input.dataset.collRenameInput);
+      if (e.key === 'Escape') cancelCollectionRename();
+    });
+  });
+
+  el.querySelectorAll('[data-coll-rename-cancel]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      cancelCollectionRename();
+    });
+  });
+
+  el.querySelectorAll('[data-coll-rename-save]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      submitCollectionRename(btn.dataset.collRenameSave);
+    });
+  });
+
+  el.querySelectorAll('[data-coll-delete-cancel]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      favPendingDeleteCollection = null;
+      renderFavView();
+    });
+  });
+
+  el.querySelectorAll('[data-coll-delete-confirm]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const f2 = loadFavs();
+      delete f2[btn.dataset.collDeleteConfirm];
+      saveFavs(f2);
+      if (favExpandedCollection === btn.dataset.collDeleteConfirm) favExpandedCollection = null;
+      favPendingDeleteCollection = null;
+      renderFavView();
+      refreshAllCardFavStates();
+    });
+  });
+
+  el.querySelectorAll('[data-fav-remove]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const favorite = { name: btn.dataset.favName, address: btn.dataset.favAddress };
+      if (btn.dataset.favRemove === 'global') {
+        removeFavoriteFromAllCollections(favorite);
+      } else {
+        setRestaurantInCollection(favorite, btn.dataset.favSource, false);
+      }
+      renderFavView();
+      refreshAllCardFavStates();
+    });
+  });
+
+  const renameInput = el.querySelector('.fav-coll-rename-input');
+  if (renameInput) {
+    setTimeout(() => {
+      renameInput.focus();
+      renameInput.select();
+    }, 0);
+  }
+  const metaInput = el.querySelector('.fav-meta-input');
+  if (metaInput) {
+    setTimeout(() => metaInput.focus(), 0);
+  }
+}
+
+/* ── FOLLOW-UP CHIPS ── */
+async function generateFollowUpChips(userQuestion, sessionSid, sessionId) {
+  const prompt = `根据用户问题「${userQuestion}」和当前给出的餐厅推荐结果，\n生成 3 个适合继续追问的简短问题，要求：\n1. 每个问题不超过 12 个字\n2. 要自然，像用户下一步真的会点的追问\n3. 尽量从这些方向里挑选：更便宜、适合约会、适合自习、vegan、离市中心近、营业更晚、人均更低、氛围更安静、适合一个人吃、当地特色\n4. 不要重复用户原问题\n5. 只返回 JSON 数组，格式必须是：\n["问题1","问题2","问题3"]\n不要返回 markdown，不要返回解释，不要返回代码块`;
+  let chips;
+  try {
+    if (DEMO_MODE) {
+      chips = getMockFollowUpChips(userQuestion);
+    } else {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'sendMessage', sessionId: sessionSid, chatInput: prompt })
+      });
+      const data = await res.json();
+      const raw = data.output || data.text || data.message || '';
+      const match = raw.match(/\[[\s\S]*?\]/);
+      if (!match) return;
+      chips = JSON.parse(match[0]);
+      if (!Array.isArray(chips) || chips.length === 0) return;
+      chips = chips.slice(0, 3).filter(c => typeof c === 'string' && c.trim());
+      if (chips.length === 0) return;
+    }
+  } catch {
+    return;
+  }
+  if (currentSessionId !== sessionId) return;
+  const chatWrap = document.getElementById('chatWrap');
+  const botWraps = chatWrap.querySelectorAll('.bot-wrap');
+  if (botWraps.length === 0) return;
   const container = document.createElement('div');
   container.className = 'follow-up-chips';
   chips.forEach(label => {
@@ -3302,26 +5061,236 @@ function appendFollowUpChips(key, sessionId) {
   scroll();
 }
 
-/* ── MOCK API ── */
-function detectScenario(text) {
-  const t = text.toLowerCase();
-  if (t.includes('berlin') || (t.includes('ramen') && !t.includes('london') && !t.includes('paris'))) return 'berlin';
-  if (t.includes('paris') || t.includes('bistro')) return 'paris';
-  if (t.includes('london')) return 'london';
-  if (t.includes('munich') || t.includes('münchen') || t.includes('vegan')) return 'munich';
-  return null;
+/* ── NETWORK ── */
+async function callAPI(text, sessionSid) {
+  if (DEMO_MODE) {
+    await new Promise(r => setTimeout(r, 500));
+    return getMockResponse(text);
+  }
+  const res = await fetch(WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'sendMessage', sessionId: sessionSid, chatInput: text })
+  });
+  const data = await res.json();
+  return data.output || data.text || data.message || '暂时没找到结果，换个关键词试试？';
 }
 
-async function callAPI(text) {
-  const delay = 400 + Math.random() * 400;
-  await new Promise(r => setTimeout(r, delay));
-  const scenario = detectScenario(text);
-  if (scenario) return MOCK_RESPONSES[scenario];
-  return `这是 Demo 模式。\n\n目前支持以下场景，点击快捷词试试：\n\n• **Berlin solo ramen**\n• **Paris date bistro**\n• **London casual dinner**\n• **Munich vegan dinner**`;
+/* ── DEMO MOCK ── */
+function getMockResponse(text) {
+  const t = (text || '').toLowerCase();
+  if (t.includes('berlin') || (t.includes('ramen') && !t.includes('london') && !t.includes('paris') && !t.includes('munich'))) return MOCK_berlin;
+  if (t.includes('paris') || t.includes('bistro')) return MOCK_paris;
+  if (t.includes('london')) return MOCK_london;
+  if (t.includes('munich') || t.includes('münchen') || t.includes('vegan')) return MOCK_munich;
+  return MOCK_berlin;
 }
+
+function getMockFollowUpChips(userQuestion) {
+  const t = (userQuestion || '').toLowerCase();
+  if (t.includes('berlin') || t.includes('ramen')) return ['性价比更高的？', '适合约会的？', '营业到更晚的？'];
+  if (t.includes('paris') || t.includes('bistro')) return ['预算再低一点？', '可以不预订的？', '午餐去哪里？'];
+  if (t.includes('london')) return ['更安静一点的？', '预订更方便的？', '周末也开的？'];
+  if (t.includes('munich') || t.includes('vegan')) return ['纯素选择？', '午餐去哪里？', '价格再低一点？'];
+  return ['性价比更高的？', '适合约会的？', '营业更晚的？'];
+}
+
+const MOCK_berlin = `🍽️ **Cocolo Ramen Mitte**
+⭐ 4.6（1842条评价）
+📍 Karl-Liebknecht-Str. 9, 10178 Berlin Mitte
+🕐 周一至周日 11:30–22:30
+
+适合你：
+吧台座位多，一个人吃不会尴尬，专注感强
+
+推荐语：
+在柏林能喝到这种浓度的博多豚骨很难得。下午两三点的低峰期进去，一碗叉烧拉面配半熟蛋，窗外是柏林的日常街景，适合自己发呆。
+
+小提醒：
+周末晚高峰排队约 20 分钟，不接受预订。叉烧分量比日本本土略小，但价格在柏林属于实在（12–15€）。
+
+[查看地图](https://www.google.com/maps/search/Cocolo+Ramen+Berlin)
+
+🍽️ **Noodle Kitchen Berlin**
+⭐ 4.4（763条评价）
+📍 Skalitzer Str. 27, 10999 Berlin Kreuzberg
+🕐 周二至周日 12:00–22:00
+
+适合你：
+Kreuzberg 氛围随性，一个人坐进去不用解释什么
+
+推荐语：
+拉面汤底比正统日式清淡一点，但配合柏林口味做了微调。麻辣版本意外地地道，灯光昏黄，背景音乐是 city pop。点一碗坐两小时也没人催。
+
+小提醒：
+周一休息。晚上七八点后座位紧张，建议提前到。现金和刷卡都可以。
+
+[查看地图](https://www.google.com/maps/search/Noodle+Kitchen+Berlin)
+
+🍽️ **Takumi Berlin Mitte**
+⭐ 4.5（408条评价）
+📍 Torstraße 61, 10119 Berlin Mitte
+🕐 周四至周日 12:00–21:00（售完即止）
+
+适合你：
+如果你对拉面有执念，这是柏林最认真的汤底
+
+推荐语：
+汤头每天现熬，老板是日本人，一个人进来会主动安排在吧台最好的位置。碗偏小但精致，适合吃完还想再来一碗的心情。
+
+小提醒：
+仅周四至周日营业，建议 12 点左右去。太晚可能售完，不预订。
+
+[查看地图](https://www.google.com/maps/search/Takumi+Berlin)`;
+
+const MOCK_paris = `🍽️ **Le Baratin**
+⭐ 4.7（1103条评价）
+📍 3 Rue Jouye-Rouve, 75020 Paris Belleville
+🕐 周二至周六 12:00–14:30, 19:00–22:30
+
+适合你：
+真正的巴黎老派情调，不做作，适合有话聊的约会
+
+推荐语：
+Belleville 山丘上的老派酒馆，铁皮吊灯、黑板菜单、小圆桌。菜单每天写在黑板上。两个人点一瓶自然酒，可以聊到打烊。
+
+小提醒：
+必须提前预订，热门夜晚提前一周也可能满。周日周一不开，人均 50€+。
+
+[查看地图](https://www.google.com/maps/search/Le+Baratin+Paris)
+
+🍽️ **Septime**
+⭐ 4.8（2241条评价）
+📍 80 Rue de Charonne, 75011 Paris
+🕐 周一至周五 12:15–14:00, 19:30–21:30
+
+适合你：
+如果这次约会想留下深刻印象，这是 Paris 最值得的一餐
+
+推荐语：
+巴黎最难订的餐厅之一，但真的值得。菜单是当天食材决定，厨师会来桌边简单介绍。空间安静，两个人之间的对话不会被打扰。
+
+小提醒：
+提前至少三周在官网预订，周五晚更难。人均 80–120€，在这个水准完全值。
+
+[查看地图](https://www.google.com/maps/search/Septime+Paris)
+
+🍽️ **Bistrot Paul Bert**
+⭐ 4.6（988条评价）
+📍 18 Rue Paul Bert, 75011 Paris
+🕐 周二至周六 12:00–14:00, 19:30–23:00
+
+适合你：
+不想太正式，但希望有真正的巴黎餐厅氛围
+
+推荐语：
+红色地铁椅、大镜子、法式鸭胸和焦糖布丁。服务员带着那种巴黎式冷淡，但偶尔会开个玩笑。一顿饭可以吃两小时。
+
+小提醒：
+提前 1–2 天预订通常够。人均 40–60€，steak-frites 是招牌。
+
+[查看地图](https://www.google.com/maps/search/Bistrot+Paul+Bert+Paris)`;
+
+const MOCK_london = `🍽️ **Padella**
+⭐ 4.7（3821条评价）
+📍 6 Southwark St, London SE1 1TQ Borough Market
+🕐 周一至周六 12:00–15:45, 17:30–22:00
+
+适合你：
+随意、好吃、不贵，Borough Market 附近完美的落脚点
+
+推荐语：
+不接受预订但队伍移动很快。手工意面，pappardelle 配八小时炖牛肉，是 London 排队最值得的那种餐厅。座位紧凑，氛围活跃。
+
+小提醒：
+周末 17:30 刚开门时等待最短。现金备用。人均 20–30£，物超所值。
+
+[查看地图](https://www.google.com/maps/search/Padella+London)
+
+🍽️ **Bao Soho**
+⭐ 4.5（2109条评价）
+📍 53 Lexington St, London W1F 9AS Soho
+🕐 周一至周六 12:00–15:00, 17:30–22:30
+
+适合你：
+轻松随意，想吃点不一样的，不用费心挑菜
+
+推荐语：
+台湾风格的 bao 在 Soho 有了自己的个性。经典猪肉 bao 配炸鸡，点三四样小食，一顿饭有层次。坐吧台看厨师工作也很好玩。
+
+小提醒：
+不接受预订，建议 17:30 开门前 10 分钟到。Soho 周末特别忙。
+
+[查看地图](https://www.google.com/maps/search/Bao+Soho+London)
+
+🍽️ **Kiln**
+⭐ 4.6（1547条评价）
+📍 58 Brewer St, London W1F 9TL Soho
+🕐 周一至周六 12:00–14:30, 17:30–22:30
+
+适合你：
+吃腻了普通 Thai，想要真的有烟火气的那种
+
+推荐语：
+全部在开放式烧烤台上现做，坐吧台看厨师用柴火烹饪是体验的一部分。猪颈肉配 nam jim、clam with chili jam，每道菜都有点野。
+
+小提醒：
+不预订。高峰期等位约 30 分钟，留名后可以在 Soho 附近逛逛。人均 30–40£。
+
+[查看地图](https://www.google.com/maps/search/Kiln+London+Soho)`;
+
+const MOCK_munich = `🍽️ **Tian München**
+⭐ 4.6（1231条评价）
+📍 Frauenstr. 4, 80469 München
+🕐 周二至周日 18:00–22:30
+
+适合你：
+如果你想让一顿素食晚餐有正式感，这是 Munich 最对的选择
+
+推荐语：
+这座城市最认真的素食餐厅。菜单完全随季节变化，摆盘接近 fine dining 标准，但价格没有贵到离谱。对素食有偏见的人吃完通常会沉默一会。
+
+小提醒：
+建议提前预订，周末晚上很紧张。套餐 4–6 道（50–80€），可提前告知是否纯素。
+
+[查看地图](https://www.google.com/maps/search/Tian+München)
+
+🍽️ **Max Pett**
+⭐ 4.5（872条评价）
+📍 Pettenkoferstr. 8, 80336 München
+🕐 周一至周六 11:30–22:00
+
+适合你：
+不想正式，只想吃一顿好吃的素食晚饭，不费脑
+
+推荐语：
+慕尼黑老牌素食餐厅，汉堡、亚洲菜、德式料理都有素食版本。价格实在（人均 15–25€）。seitan schnitzel 是招牌。
+
+小提醒：
+无需预订，随走随坐。全素（vegan）可直接告诉服务员，他们会圈出菜单。
+
+[查看地图](https://www.google.com/maps/search/Max+Pett+München)
+
+🍽️ **Bodhi München**
+⭐ 4.4（634条评价）
+📍 Lindwurmstr. 33, 80337 München
+🕐 周一至周六 11:00–21:30
+
+适合你：
+想吃亚洲素食，便宜，快，不用费心
+
+推荐语：
+亚洲风格素食快餐，食材新鲜、口味调得好。越南风格的汤粉、炒饭、spring rolls，都有素食或全素版本。
+
+小提醒：
+人均 10–18€，人气高但翻台快。现金优先，刷卡也行。
+
+[查看地图](https://www.google.com/maps/search/Bodhi+München)`;
 
 /* ── SEND ── */
-function suggest(t) {
+function suggest(t, apiOverride) {
+  pendingApiPromptOverride = typeof apiOverride === 'string' ? apiOverride : null;
+  pendingApiTask = (apiOverride && typeof apiOverride === 'object') ? apiOverride : null;
   document.getElementById('inp').value = t;
   send();
 }
@@ -3332,44 +5301,66 @@ async function send() {
   const inp = document.getElementById('inp');
   const text = inp.value.trim();
   if (!text) return;
+  decideStarterActive = false;
+  clearDecideWheelTimer();
+  decideWheelSpinning = false;
   inp.value = ''; inp.style.height = 'auto';
-  busy = true; btn.disabled = true;
+
+  busy = true;
+  btn.disabled = true;
 
   const session = getCurrentSession();
-  if (!session) return;
+  const sessionId = session.id;
 
   if (session.messages.length === 0) {
-    session.title = text.slice(0, 22);
+    session.title = text.slice(0, 20) || '新对话';
     saveSessions();
     renderSidebar();
   }
+
   session.messages.push({ role: 'user', text });
   saveSessions();
   appendUserBubble(text);
   document.querySelectorAll('.follow-up-chips').forEach(el => el.remove());
   showTyping();
 
-  let output;
+  let output = null, errorType = null;
+  let apiTask = pendingApiTask;
+  const apiInput = ((pendingApiPromptOverride && pendingApiPromptOverride.trim()) || buildRecommendInputWithGeo(text)).trim();
+  pendingApiPromptOverride = null;
+  pendingApiTask = null;
   try {
-    output = await callAPI(text);
+    if (apiTask && apiTask.type === 'strictLocalCuisine') {
+      output = await runStrictLocalCuisineSearch(apiTask, session.sid);
+    } else if (currentMode === 'recommend' && geoStatus === 'ready' && geoData && !textLooksLikeHasLocation(text)) {
+      const autoCuisine = extractCuisineFromText(text);
+      if (autoCuisine) {
+        apiTask = { type: 'strictLocalCuisine', direction: autoCuisine, geoSnapshot: cloneGeoSnapshot() };
+        output = await runStrictLocalCuisineSearch(apiTask, session.sid);
+      } else {
+        output = await callAPI(apiInput, session.sid);
+      }
+    } else {
+      output = await callAPI(apiInput, session.sid);
+    }
+    if (isRateLimitError(output)) { errorType = 'rateLimit'; output = null; }
   } catch {
-    output = null;
+    errorType = 'network';
   }
+
   hideTyping();
 
-  if (output) {
+  if (output !== null) {
     session.messages.push({ role: 'bot', text: output });
     saveSessions();
-    appendBotBubbles(output);
-    const scenario = detectScenario(text);
-    if (scenario && parseRestaurants(output).restaurants.length > 0) {
-      appendFollowUpChips(scenario, session.id);
+    if (currentSessionId === sessionId) {
+      appendBotBubbles(output);
+      if (parseRestaurants(output).restaurants.length > 0) {
+        generateFollowUpChips(text, session.sid, sessionId);
+      }
     }
   } else {
-    const errRow = document.createElement('div');
-    errRow.className = 'msg-row';
-    errRow.innerHTML = `<div class="av">觅</div><div class="bot-wrap"><div class="plain-bubble">网络好像出了点问题，请稍后再试</div></div>`;
-    document.getElementById('chatWrap').appendChild(errRow);
+    if (currentSessionId === sessionId) appendErrorBubble(errorType, text, apiInput, apiTask);
   }
 
   busy = false;
@@ -3377,76 +5368,235 @@ async function send() {
   scroll();
 }
 
-/* ── SIDEBAR TOGGLE ── */
-function initSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  const overlay = document.getElementById('sidebarOverlay');
-  const hamburger = document.getElementById('hamburgerBtn');
-  const resizer = document.getElementById('sidebarResizer');
-
-  hamburger.addEventListener('click', () => {
-    if (window.innerWidth < 900) {
-      sidebar.classList.toggle('mobile-open');
-      overlay.classList.toggle('visible');
-    } else {
-      sidebar.classList.toggle('collapsed');
-      resizer.style.display = sidebar.classList.contains('collapsed') ? 'none' : '';
-    }
-  });
-  overlay.addEventListener('click', () => {
-    sidebar.classList.remove('mobile-open');
-    overlay.classList.remove('visible');
-  });
-  document.getElementById('newChatBtn').addEventListener('click', e => {
-    e.stopPropagation();
-    newSession();
-  });
-  document.getElementById('favEntry').addEventListener('click', () => {
-    showFavHint('Demo 模式下收藏功能可用，但没有独立的收藏视图');
-  });
-
-  /* sidebar resizer */
-  let dragging = false, startX = 0, startW = 0;
-  resizer.addEventListener('mousedown', e => {
-    dragging = true; startX = e.clientX; startW = sidebar.offsetWidth;
-    document.body.classList.add('resizing-sidebar');
-    e.preventDefault();
-  });
-  document.addEventListener('mousemove', e => {
-    if (!dragging) return;
-    const w = Math.min(360, Math.max(208, startW + (e.clientX - startX)));
-    sidebar.style.width = w + 'px';
-  });
-  document.addEventListener('mouseup', () => {
-    dragging = false;
-    document.body.classList.remove('resizing-sidebar');
-  });
-}
-
-/* ── INPUT ── */
-function initInput() {
-  const inp = document.getElementById('inp');
+async function resendRequest(lastUserText, lastApiText, lastApiTask) {
   const btn = document.getElementById('btn');
-  inp.addEventListener('input', () => resize(inp));
-  inp.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
-  });
-  btn.addEventListener('click', send);
+  if (busy || btn.disabled) return;
+  busy = true;
+  btn.disabled = true;
+
+  const c = document.getElementById('chatWrap');
+  const rows = c.querySelectorAll('.msg-row');
+  for (let i = rows.length - 1; i >= 0; i--) {
+    if (rows[i].querySelector('.error-bubble')) { rows[i].remove(); break; }
+  }
+  document.querySelectorAll('.follow-up-chips').forEach(el => el.remove());
+  showTyping();
+
+  const session = getCurrentSession();
+  const sessionId = session.id;
+
+  let output = null, errorType = null;
+  const apiInput = ((lastApiText && String(lastApiText).trim()) || buildRecommendInputWithGeo(lastUserText)).trim();
+  try {
+    if (lastApiTask && lastApiTask.type === 'strictLocalCuisine') {
+      output = await runStrictLocalCuisineSearch(lastApiTask, session.sid);
+    } else {
+      output = await callAPI(apiInput, session.sid);
+    }
+    if (isRateLimitError(output)) { errorType = 'rateLimit'; output = null; }
+  } catch {
+    errorType = 'network';
+  }
+
+  hideTyping();
+
+  if (output !== null) {
+    session.messages.push({ role: 'bot', text: output });
+    saveSessions();
+    if (currentSessionId === sessionId) {
+      appendBotBubbles(output);
+      if (parseRestaurants(output).restaurants.length > 0) {
+        generateFollowUpChips(lastUserText, session.sid, sessionId);
+      }
+    }
+  } else {
+    if (currentSessionId === sessionId) appendErrorBubble(errorType, lastUserText, apiInput, lastApiTask);
+  }
+
+  busy = false;
+  setTimeout(() => { btn.disabled = false; document.getElementById('inp').focus(); }, 2500);
+  scroll();
 }
 
 /* ── INIT ── */
 function init() {
+  loadSidebarWidth();
+  applySidebarWidth();
+  initSidebarResize();
   loadSessions();
   if (sessions.length === 0) {
-    newSession();
+    createNewSession();
   } else {
     currentSessionId = sessions[sessions.length - 1].id;
     renderMessages();
     renderSidebar();
   }
-  initInput();
-  initSidebar();
+
+  document.getElementById('inp').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  });
+  document.getElementById('inp').addEventListener('input', function() { resize(this); });
+  document.getElementById('modeSwitch').querySelectorAll('.mode-switch-btn').forEach(btn => {
+    btn.addEventListener('click', () => setAppMode(btn.dataset.mode));
+  });
+  syncModeUI();
+  document.getElementById('btn').addEventListener('click', send);
+  document.getElementById('newChatBtn').addEventListener('click', createNewSession);
+  document.getElementById('hamburgerBtn').addEventListener('click', toggleSidebar);
+  document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
   initFavPopover();
+  initSharePanel();
+}
+
+/* ── SHARE FUNCTIONALITY ── */
+let _sharePendingRestaurants = null;
+
+function openSharePanel(restaurants) {
+  _sharePendingRestaurants = restaurants.map(r => ({ ...r, selected: true }));
+  renderShareRestList();
+  document.getElementById('shareConfirmBtn').disabled = false;
+  document.getElementById('shareConfirmBtn').textContent = '生成图片';
+  document.getElementById('shareOverlay').classList.add('open');
+}
+
+function closeSharePanel() {
+  document.getElementById('shareOverlay').classList.remove('open');
+  _sharePendingRestaurants = null;
+}
+
+function renderShareRestList() {
+  const list = document.getElementById('shareRestList');
+  list.innerHTML = '';
+  if (!_sharePendingRestaurants) return;
+  _sharePendingRestaurants.forEach((r, i) => {
+    const item = document.createElement('div');
+    item.className = 'share-rest-item' + (r.selected ? ' checked' : '');
+    const metaParts = [];
+    if (r.rating) metaParts.push('⭐ ' + esc(r.rating));
+    if (r.address) metaParts.push(esc(r.address));
+    item.innerHTML = `
+      <div class="share-rest-check">${r.selected ? '✓' : ''}</div>
+      <div class="share-rest-label">
+        <div class="share-rest-name">${esc(r.name)}</div>
+        ${metaParts.length ? `<div class="share-rest-meta">${metaParts.join(' · ')}</div>` : ''}
+      </div>
+    `;
+    item.addEventListener('click', () => {
+      _sharePendingRestaurants[i].selected = !_sharePendingRestaurants[i].selected;
+      renderShareRestList();
+      const anySelected = _sharePendingRestaurants.some(x => x.selected);
+      document.getElementById('shareConfirmBtn').disabled = !anySelected;
+    });
+    list.appendChild(item);
+  });
+  const anySelected = _sharePendingRestaurants.some(x => x.selected);
+  document.getElementById('shareConfirmBtn').disabled = !anySelected;
+}
+
+function initSharePanel() {
+  document.getElementById('shareOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('shareOverlay')) closeSharePanel();
+  });
+  document.getElementById('shareCancelBtn').addEventListener('click', closeSharePanel);
+  document.getElementById('shareConfirmBtn').addEventListener('click', doGenerateShareImage);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('shareOverlay').classList.contains('open')) closeSharePanel();
+  });
+}
+
+async function doGenerateShareImage() {
+  if (!_sharePendingRestaurants) return;
+  const selected = _sharePendingRestaurants.filter(r => r.selected);
+  if (selected.length === 0) return;
+  const btn = document.getElementById('shareConfirmBtn');
+  btn.disabled = true;
+  btn.textContent = '生成中…';
+  try {
+    await generateShareImage(selected);
+    closeSharePanel();
+  } catch {
+    btn.disabled = false;
+    btn.textContent = '生成图片';
+    showShareToast('生成失败，请重试');
+  }
+}
+
+async function generateShareImage(restaurants) {
+  if (typeof html2canvas !== 'function') {
+    showShareToast('分享功能加载中，请稍后重试');
+    throw new Error('html2canvas not loaded');
+  }
+
+  const d = new Date();
+  const dateStr = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  const filename = `觅食官_${dateStr}.png`;
+
+  const restCardsHtml = restaurants.map((r, i) => `
+    <div style="background:#FDFAF6;border:1px solid #E5DDD4;border-radius:12px;padding:18px 20px;margin-bottom:10px;">
+      <div style="font-family:'DM Sans',sans-serif;font-size:10px;font-weight:500;color:#CCBFB3;letter-spacing:0.06em;margin-bottom:7px;">${String(i+1).padStart(2,'0')}</div>
+      <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:600;color:#1A1209;line-height:1.3;margin-bottom:7px;letter-spacing:-0.005em;">${esc(r.name)}</div>
+      ${r.rating ? `<div style="font-family:'DM Sans',sans-serif;font-size:12px;color:#C4622D;margin-bottom:5px;"><span>${starStr(r.rating)}</span> <span style="color:#7A6858;">${esc(r.rating)} 分</span>${r.ratingCount ? ` <span style="color:#7A6858;opacity:0.72;">(${esc(r.ratingCount)})</span>` : ''}</div>` : ''}
+      ${r.address ? `<div style="font-family:'DM Sans',sans-serif;font-size:12px;color:#7A6858;margin-bottom:4px;">📍 ${esc(r.address)}</div>` : ''}
+      ${r.hours ? `<div style="font-family:'DM Sans',sans-serif;font-size:12px;color:#7A6858;margin-bottom:4px;">🕐 ${esc(r.hours)}</div>` : ''}
+      ${r.suitableReason ? `<div style="margin-top:10px;border:1px solid #E9D5C6;background:linear-gradient(180deg,#FFF7F0 0%,#FDF5EE 100%);border-radius:12px;padding:9px 10px;"><div style="font-family:'DM Sans',sans-serif;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#C4622D;margin-bottom:5px;">适合你</div><div style="font-family:'DM Sans',sans-serif;font-size:12px;line-height:1.6;color:#1A1209;">${esc(r.suitableReason)}</div></div>` : ''}
+      ${(r.warmRecommendation || r.quote) ? `<div style="font-family:'Playfair Display',serif;font-size:13px;color:#7A6858;line-height:1.7;border-left:2px solid #C4622D;padding-left:11px;margin-top:10px;">“${esc(r.warmRecommendation || r.quote)}”</div>` : ''}
+      ${r.reviewSignal ? `<div style="font-family:'DM Sans',sans-serif;font-size:11px;color:#7A6858;line-height:1.6;background:rgba(229,221,212,0.3);border-radius:10px;padding:8px 10px;margin-top:9px;"><span style="color:#1A1209;opacity:0.72;margin-right:4px;">小提醒</span>${esc(r.reviewSignal)}</div>` : ''}
+    </div>
+  `).join('');
+
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:480px;background:#F7F3EE;font-family:\'DM Sans\',sans-serif;-webkit-font-smoothing:antialiased;box-sizing:border-box;';
+  container.innerHTML = `
+    <div style="padding:36px 32px 28px;">
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px;">
+        <span style="font-family:'Playfair Display',serif;font-size:26px;font-weight:600;color:#1A1209;letter-spacing:-0.01em;line-height:1;">觅食官</span>
+        <span style="font-family:'DM Sans',sans-serif;font-size:13px;color:#7A6858;font-weight:400;">· Find Good Food</span>
+      </div>
+      <div style="width:28px;height:2px;background:#C4622D;border-radius:1px;margin-bottom:16px;"></div>
+      <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:#7A6858;margin-bottom:24px;letter-spacing:0.02em;opacity:0.8;">今天这份推荐，想先存下来</div>
+      ${restCardsHtml}
+      <div style="margin-top:20px;padding-top:14px;border-top:1px solid #E5DDD4;font-family:'DM Sans',sans-serif;font-size:10px;color:#7A6858;opacity:0.4;letter-spacing:0.06em;text-align:center;">rachelchen77ccc.github.io/misshiguan</div>
+    </div>
+  `;
+  document.body.appendChild(container);
+
+  try {
+    const canvas = await html2canvas(container, {
+      backgroundColor: '#F7F3EE',
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      width: 480,
+      height: container.scrollHeight,
+      windowWidth: 480,
+      windowHeight: container.scrollHeight,
+    });
+    const dataUrl = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.download = filename;
+    a.href = dataUrl;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) showShareToast('图片已生成，如未保存请长按图片');
+  } finally {
+    document.body.removeChild(container);
+  }
+}
+
+function showShareToast(msg) {
+  let t = document.getElementById('shareToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'shareToast';
+    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(26,18,9,0.82);color:white;font-family:\'DM Sans\',sans-serif;font-size:13px;padding:10px 22px;border-radius:100px;z-index:9999;white-space:nowrap;pointer-events:none;transition:opacity 0.3s;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3000);
 }
 
 document.addEventListener('DOMContentLoaded', init);
