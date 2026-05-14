@@ -1,0 +1,3455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>觅食官 · Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --logo-size:              31px;
+    --restaurant-name-size:   17px;
+    --body-size:              14px;
+    --label-size:             13px;
+    --title-weight:           600;
+    --body-weight:            400;
+    --card-padding:           22px;
+    --card-gap:               13px;
+    --page-margin:            24px;
+    --element-gap:            8px;
+    --card-radius:            12px;
+    --btn-radius:             9px;
+    --input-radius:           7px;
+    --color-bg:               #F7F3EE;
+    --color-card:             #FDFAF6;
+    --color-text-main:        #1A1209;
+    --color-text-secondary:   #7A6858;
+    --color-accent:           #C4622D;
+    --color-border:           #E5DDD4;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--color-bg);
+    height: 100vh;
+    overflow: hidden;
+    color: var(--color-text-main);
+    -webkit-font-smoothing: antialiased;
+  }
+  body.resizing-sidebar {
+    cursor: col-resize;
+    user-select: none;
+  }
+
+  /* ── APP SHELL ── */
+  .app-shell {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: #EDE6DC;
+    border-right: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: width 0.25s ease, opacity 0.2s ease;
+  }
+
+  .sidebar.collapsed {
+    width: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .sidebar-resizer {
+    width: 8px;
+    flex-shrink: 0;
+    cursor: col-resize;
+    position: relative;
+    background: transparent;
+  }
+  .sidebar-resizer::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 0;
+    width: 1px;
+    height: 100%;
+    background: rgba(122, 104, 88, 0.14);
+    transition: background 0.15s;
+  }
+  .sidebar-resizer:hover::after,
+  body.resizing-sidebar .sidebar-resizer::after {
+    background: rgba(196, 98, 45, 0.45);
+  }
+  .sidebar.collapsed + .sidebar-resizer {
+    width: 0;
+    pointer-events: none;
+  }
+
+  .sidebar-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 14px 16px;
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+  }
+
+  .sidebar-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+
+  .new-chat-btn {
+    width: 28px;
+    height: 28px;
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    color: var(--color-text-secondary);
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+    line-height: 1;
+    padding-bottom: 1px;
+  }
+
+  .new-chat-btn:hover {
+    background: var(--color-accent);
+    color: white;
+    border-color: var(--color-accent);
+  }
+
+  .sidebar-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 6px;
+  }
+
+  .sidebar-list::-webkit-scrollbar { width: 3px; }
+  .sidebar-list::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
+
+  .session-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border: 1px solid transparent;
+  }
+
+  .session-item:hover { background: rgba(0,0,0,0.05); }
+
+  .session-item.active {
+    background: var(--color-card);
+    border-color: var(--color-border);
+  }
+
+  .session-title {
+    flex: 1;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--color-text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 400;
+    min-width: 0;
+  }
+
+  .session-del {
+    opacity: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    font-size: 16px;
+    padding: 0 3px;
+    line-height: 1;
+    border-radius: 3px;
+    transition: opacity 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+
+  .session-item:hover .session-del { opacity: 1; }
+  .session-del:hover { color: var(--color-accent); }
+  .session-edit {
+    opacity: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    padding: 0 3px;
+    line-height: 1;
+    border-radius: 3px;
+    transition: opacity 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+  .session-item:hover .session-edit { opacity: 1; }
+  .session-edit:hover { color: var(--color-accent); }
+  .session-item.editing {
+    background: var(--color-card);
+    border-color: var(--color-border);
+    cursor: default;
+  }
+  .session-rename-input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    border-radius: 7px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--color-text-main);
+    padding: 5px 8px;
+    outline: none;
+  }
+  .session-rename-input:focus { border-color: var(--color-accent); }
+  .session-rename-save,
+  .session-rename-cancel {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    padding: 0 3px;
+    line-height: 1;
+    border-radius: 3px;
+    flex-shrink: 0;
+    transition: color 0.15s;
+  }
+  .session-rename-save:hover,
+  .session-rename-cancel:hover { color: var(--color-accent); }
+
+  /* ── SIDEBAR OVERLAY (mobile) ── */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 49;
+  }
+
+  .sidebar-overlay.visible { display: block; }
+
+  /* ── MAIN AREA ── */
+  .main-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--color-card);
+    border-bottom: 1px solid var(--color-border);
+    padding: 16px var(--page-margin);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .hamburger-btn {
+    width: 32px;
+    height: 32px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 6px;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+
+  .hamburger-btn:hover { background: var(--color-bg); }
+
+  .hamburger-btn span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: var(--color-text-secondary);
+    border-radius: 1px;
+  }
+
+  .logo-name {
+    font-family: 'Playfair Display', serif;
+    font-size: var(--logo-size);
+    font-weight: var(--title-weight);
+    color: var(--color-text-main);
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+
+  .logo-sep {
+    width: 1px;
+    height: 20px;
+    background: var(--color-border);
+    flex-shrink: 0;
+  }
+
+  .logo-sub {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--label-size);
+    color: var(--color-text-secondary);
+    font-weight: var(--body-weight);
+    letter-spacing: 0.01em;
+  }
+
+  .logo-dot {
+    margin-left: auto;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+
+  /* ── CHAT AREA ── */
+  .chat-wrap {
+    flex: 1;
+    overflow-y: auto;
+    padding: 36px var(--page-margin) 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    max-width: 980px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .chat-wrap::-webkit-scrollbar { width: 4px; }
+  .chat-wrap::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
+
+  /* ── WELCOME ── */
+  .welcome {
+    padding: 8px 0 4px;
+    animation: fadeUp 0.4s ease;
+  }
+
+  .welcome-eyebrow {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin-bottom: 14px;
+    opacity: 0.8;
+  }
+
+  .welcome h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 30px;
+    font-weight: 500;
+    color: var(--color-text-main);
+    line-height: 1.2;
+    margin-bottom: 12px;
+    letter-spacing: -0.01em;
+  }
+
+  .welcome p {
+    font-size: var(--body-size);
+    color: var(--color-text-secondary);
+    line-height: 1.8;
+    font-weight: var(--body-weight);
+    max-width: 400px;
+  }
+  .welcome-mode-sub {
+    margin-top: 8px;
+    max-width: 520px;
+  }
+  .home-entry-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 18px 0 14px;
+    max-width: 640px;
+  }
+  .home-entry-card {
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+    border-radius: 14px;
+    padding: 14px 14px 13px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  }
+  .home-entry-card:hover {
+    border-color: #DFC8B7;
+    background: #FBF7F2;
+    transform: translateY(-1px);
+  }
+  .home-entry-card.active {
+    border-color: #E3B89B;
+    background: #FFF5EF;
+  }
+  .home-entry-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    color: var(--color-text-main);
+    line-height: 1.2;
+    margin-bottom: 5px;
+    letter-spacing: -0.01em;
+  }
+  .home-entry-sub {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+  }
+  .decide-result-card {
+    margin-top: 14px;
+    max-width: 520px;
+    border: 1px solid #E7D8CC;
+    background: #FFF7F1;
+    border-radius: 14px;
+    padding: 14px 15px 13px;
+    animation: fadeUp 0.2s ease;
+  }
+  .decide-result-eyebrow {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    opacity: 0.7;
+    margin-bottom: 4px;
+  }
+  .decide-result-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    line-height: 1.35;
+    color: var(--color-text-main);
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+  }
+  .decide-result-direction {
+    display: inline-block;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    line-height: 1;
+    color: var(--color-accent);
+    border: 1px solid #E7C5B0;
+    background: #FFF3EA;
+    border-radius: 999px;
+    padding: 4px 9px;
+    margin-bottom: 8px;
+  }
+  .decide-result-sub {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+    margin-bottom: 10px;
+  }
+  .decide-result-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .decide-cta-btn,
+  .decide-ghost-btn {
+    border-radius: 999px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: opacity 0.15s, background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .decide-cta-btn {
+    border: 1px solid #E3B89B;
+    background: #FFF1E8;
+    color: var(--color-accent);
+  }
+  .decide-cta-btn:hover { opacity: 0.85; }
+  .decide-cta-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .decide-ghost-btn {
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+    color: var(--color-text-secondary);
+  }
+  .decide-ghost-btn:hover { background: var(--color-bg); }
+  .decide-ghost-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .decide-wheel-card {
+    margin-top: 12px;
+    max-width: 560px;
+    border: 1px solid var(--color-border);
+    background: linear-gradient(165deg, #FCF8F2 0%, #F7F1E9 100%);
+    border-radius: 16px;
+    padding: 14px 14px 12px;
+  }
+  .decide-wheel-head {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    line-height: 1.25;
+    color: var(--color-text-main);
+    letter-spacing: -0.01em;
+    margin-bottom: 2px;
+  }
+  .decide-wheel-sub {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin-bottom: 10px;
+  }
+  .decide-wheel-wrap {
+    width: 260px;
+    height: 260px;
+    margin: 0 auto 10px;
+    position: relative;
+  }
+  .decide-wheel-pointer {
+    position: absolute;
+    left: 50%;
+    top: -6px;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 13px solid #C4622D;
+    z-index: 3;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.12));
+  }
+  .decide-wheel {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 1px solid #E5D5C9;
+    position: relative;
+    background:
+      radial-gradient(circle at center, rgba(255,255,255,0) 0 36%, rgba(255,255,255,0.65) 36% 38%, rgba(255,255,255,0) 38% 100%),
+      conic-gradient(from -12deg, #F2DED0, #F9E8D9, #F3DBC7, #E9D4C7, #F4E3D3, #EED7C8, #F7E7D8, #EAD6C9, #F2DED0);
+    box-shadow: inset 0 0 0 8px rgba(255,255,255,0.62), 0 6px 20px rgba(98,71,46,0.08);
+  }
+  .decide-wheel.spinning {
+    box-shadow: inset 0 0 0 8px rgba(255,255,255,0.62), 0 10px 26px rgba(98,71,46,0.15);
+  }
+  .decide-wheel-seg {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 90px;
+    margin-left: -45px;
+    transform: rotate(var(--a)) translateY(-106px) rotate(calc(-1 * var(--a)));
+    text-align: center;
+  }
+  .decide-wheel-seg span {
+    display: inline-block;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    line-height: 1.2;
+    color: #6C5B4B;
+    background: rgba(255,255,255,0.72);
+    border: 1px solid rgba(208,188,172,0.8);
+    border-radius: 999px;
+    padding: 4px 8px;
+    max-width: 88px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .decide-wheel-seg.active span {
+    border-color: #E3B89B;
+    color: var(--color-accent);
+    background: #FFF3EA;
+  }
+  .decide-wheel-center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 1px solid #E2CEC0;
+    background: #FFF9F2;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 23px;
+    color: #9C7A63;
+    letter-spacing: 0.02em;
+  }
+  .decide-wheel-controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .decide-filter-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 14px;
+    padding: 14px 14px 12px;
+    border: 1px solid rgba(229, 213, 201, 0.9);
+    border-radius: 14px;
+    background: rgba(255, 252, 247, 0.78);
+  }
+
+  .decide-filter-group {
+    min-width: 0;
+  }
+
+  .decide-filter-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    line-height: 1.2;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    opacity: 0.72;
+    margin-bottom: 8px;
+  }
+
+  .decide-filter-chips,
+  .decide-custom-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .decide-filter-chip,
+  .decide-custom-chip {
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+    color: var(--color-text-secondary);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
+  }
+
+  .decide-filter-chip:hover,
+  .decide-custom-chip:hover {
+    background: #FBF5EF;
+    border-color: #DFC8B7;
+    transform: translateY(-1px);
+  }
+
+  .decide-filter-chip.active {
+    background: #FFF1E8;
+    border-color: #E3B89B;
+    color: var(--color-accent);
+  }
+
+  .decide-wheel-summary {
+    margin-bottom: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1.65;
+    color: var(--color-text-secondary);
+  }
+
+  .decide-wheel-summary strong {
+    color: var(--color-text-main);
+    font-weight: 500;
+  }
+
+  .decide-custom-panel {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(229, 213, 201, 0.8);
+  }
+
+  .decide-custom-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .decide-custom-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    line-height: 1.25;
+    color: var(--color-text-main);
+    letter-spacing: -0.01em;
+  }
+
+  .decide-custom-sub {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+  }
+
+  .decide-custom-input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .decide-custom-input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.72);
+    color: var(--color-text-main);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    line-height: 1.2;
+    padding: 10px 14px;
+    outline: none;
+  }
+
+  .decide-custom-input:focus {
+    border-color: #E3B89B;
+    box-shadow: 0 0 0 3px rgba(227, 184, 155, 0.14);
+  }
+
+  .decide-custom-add {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .decide-custom-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding-right: 9px;
+  }
+
+  .decide-custom-remove {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(196, 98, 45, 0.1);
+    color: var(--color-accent);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .decide-custom-empty {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+    opacity: 0.72;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 22px;
+  }
+
+  .chip {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--label-size);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+    padding: 6px 16px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    font-weight: var(--body-weight);
+    line-height: 1.4;
+  }
+
+  .chip:hover {
+    background: var(--color-accent);
+    color: white;
+    border-color: var(--color-accent);
+  }
+  .chip-geo {
+    border-color: #D8B8A5;
+    color: #8D6247;
+    background: #FFF7F2;
+    font-size: calc(var(--label-size) + 1px);
+    font-weight: 520;
+    padding: 7px 18px;
+    letter-spacing: 0.01em;
+  }
+  .chip-geo.is-loading {
+    opacity: 0.7;
+    cursor: wait;
+  }
+  .geo-hint {
+    max-width: 980px;
+    margin: 8px auto 0;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--color-text-secondary);
+    opacity: 0.8;
+    min-height: 20px;
+  }
+
+  /* ── MESSAGE ROWS ── */
+  .msg-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    animation: fadeUp 0.25s ease;
+  }
+
+  .msg-row.user { flex-direction: row-reverse; }
+
+  .av {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+    letter-spacing: -0.01em;
+    margin-top: 2px;
+  }
+
+  .user-av {
+    background: var(--color-accent);
+    color: white;
+    border-color: var(--color-accent);
+  }
+
+  .user-bubble {
+    max-width: 58%;
+    background: var(--color-accent);
+    color: white;
+    border-radius: var(--btn-radius);
+    padding: 10px 16px;
+    font-size: var(--body-size);
+    line-height: 1.65;
+    font-weight: var(--body-weight);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .plain-bubble {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--btn-radius);
+    padding: 10px 16px;
+    font-size: var(--body-size);
+    line-height: 1.8;
+    color: var(--color-text-secondary);
+    font-weight: var(--body-weight);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .bot-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* ── TYPING INDICATOR ── */
+  .typing-dots {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    padding: 3px 0;
+  }
+
+  .typing-dots span {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    opacity: 0.25;
+    animation: dotPulse 1.4s ease-in-out infinite;
+  }
+
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes dotPulse {
+    0%, 60%, 100% { opacity: 0.25; transform: scale(1); }
+    30%           { opacity: 0.9;  transform: scale(1.25); }
+  }
+
+  /* ── CARDS GRID ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--card-gap);
+  }
+
+  /* ── RESTAURANT CARD ── */
+  .r-card {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--card-radius);
+    padding: var(--card-padding);
+    animation: fadeUp 0.3s ease both;
+    transition: border-color 0.2s;
+  }
+
+  .r-card:hover { border-color: #CCADA0; }
+
+  .card-index {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-border);
+    letter-spacing: 0.06em;
+    margin-bottom: var(--element-gap);
+  }
+
+  .card-name {
+    font-family: 'Playfair Display', serif;
+    font-size: var(--restaurant-name-size);
+    font-weight: var(--title-weight);
+    color: var(--color-text-main);
+    line-height: 1.3;
+    margin-bottom: var(--element-gap);
+    letter-spacing: -0.005em;
+  }
+
+  .card-rating {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: var(--element-gap);
+  }
+
+  .card-stars {
+    color: var(--color-accent);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    line-height: 1;
+  }
+
+  .card-score {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--label-size);
+    color: var(--color-text-secondary);
+    font-weight: var(--body-weight);
+  }
+
+  .card-rating-count {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    opacity: 0.72;
+    font-weight: var(--body-weight);
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--label-size);
+    color: var(--color-text-secondary);
+    margin-bottom: calc(var(--element-gap) * 0.6);
+    line-height: 1.5;
+    font-weight: var(--body-weight);
+  }
+
+  .meta-icon {
+    flex-shrink: 0;
+    font-size: 11px;
+    opacity: 0.5;
+    margin-top: 1px;
+  }
+
+  .card-divider {
+    border: none;
+    border-top: 1px solid var(--color-border);
+    margin: calc(var(--element-gap) * 1.2) 0;
+    opacity: 0.7;
+  }
+
+  .card-quote {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: var(--body-size);
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+    border-left: 2px solid var(--color-accent);
+    padding-left: 12px;
+    margin-bottom: var(--element-gap);
+    font-weight: 400;
+  }
+
+  .card-reasoning {
+    margin: calc(var(--element-gap) * 1.1) 0 var(--element-gap);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .card-suitable {
+    border: 1px solid #E9D5C6;
+    background: linear-gradient(180deg, #FFF7F0 0%, #FDF5EE 100%);
+    border-radius: 14px;
+    padding: 11px 12px 10px;
+    min-width: 0;
+  }
+
+  .card-suitable-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    line-height: 1;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin-bottom: 7px;
+    font-weight: 500;
+  }
+
+  .card-suitable-text {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--color-text-main);
+    overflow-wrap: anywhere;
+  }
+
+  .card-story {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    line-height: 1.72;
+    color: var(--color-text-main);
+    padding-left: 12px;
+    border-left: 2px solid #D8B39B;
+    min-width: 0;
+  }
+
+  .card-story::before,
+  .card-story::after {
+    color: #C79A7D;
+    opacity: 0.7;
+  }
+
+  .card-story::before { content: "“"; margin-right: 1px; }
+  .card-story::after { content: "”"; margin-left: 1px; }
+
+  .card-note {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1.65;
+    color: var(--color-text-secondary);
+    background: rgba(229, 221, 212, 0.3);
+    border-radius: 12px;
+    padding: 9px 11px;
+    overflow-wrap: anywhere;
+  }
+
+  .card-note-label {
+    color: var(--color-text-main);
+    opacity: 0.72;
+    margin-right: 4px;
+  }
+
+  .card-link {
+    display: inline-block;
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--label-size);
+    color: var(--color-text-secondary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--color-border);
+    transition: color 0.15s, text-decoration-color 0.15s;
+    font-weight: var(--body-weight);
+    cursor: pointer;
+  }
+
+  .card-link:hover {
+    color: var(--color-accent);
+    text-decoration-color: var(--color-accent);
+  }
+
+  /* ── ERROR BUBBLE ── */
+  .error-bubble {
+    background: #FDF3EE;
+    border: 1px solid #F0C4A8;
+    border-radius: var(--btn-radius);
+    padding: 14px 16px;
+    max-width: 380px;
+  }
+
+  .error-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--body-size);
+    font-weight: 500;
+    color: var(--color-text-main);
+    margin-bottom: 5px;
+  }
+
+  .error-sub {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--label-size);
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+
+  .error-retry {
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--label-size);
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .error-retry:hover { opacity: 0.82; }
+
+  /* ── INPUT BAR ── */
+  .input-bar {
+    background: var(--color-card);
+    border-top: 1px solid var(--color-border);
+    padding: 14px var(--page-margin) 20px;
+    flex-shrink: 0;
+  }
+  .mode-switch {
+    max-width: 980px;
+    margin: 0 auto 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-bg);
+    padding: 4px;
+  }
+  .mode-switch-btn {
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1;
+    border-radius: 999px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, opacity 0.15s;
+    opacity: 0.85;
+    white-space: nowrap;
+  }
+  .mode-switch-btn.active {
+    background: #FFF3EE;
+    color: var(--color-accent);
+    opacity: 1;
+  }
+  .mode-switch-btn:hover { opacity: 1; }
+
+  .input-inner {
+    max-width: 980px;
+    margin: 0 auto;
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  textarea {
+    flex: 1;
+    border: 1px solid var(--color-border);
+    border-radius: var(--input-radius);
+    padding: 11px 15px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--body-size);
+    color: var(--color-text-main);
+    background: var(--color-bg);
+    resize: none;
+    outline: none;
+    line-height: 1.55;
+    min-height: 44px;
+    max-height: 130px;
+    transition: border-color 0.15s;
+    font-weight: var(--body-weight);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  textarea:focus { border-color: var(--color-accent); }
+
+  textarea::placeholder {
+    color: var(--color-text-secondary);
+    opacity: 0.55;
+  }
+
+  .send-btn {
+    width: 44px;
+    height: 44px;
+    background: var(--color-accent);
+    border: none;
+    border-radius: var(--btn-radius);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+  }
+
+  .send-btn:hover  { opacity: 0.82; }
+  .send-btn:active { opacity: 0.68; }
+  .send-btn:disabled { opacity: 0.22; cursor: not-allowed; }
+
+  .send-btn svg {
+    width: 17px; height: 17px;
+    fill: none; stroke: white;
+    stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  .foot-note {
+    text-align: center;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    opacity: 0.45;
+    margin-top: 9px;
+    font-weight: var(--body-weight);
+    letter-spacing: 0.03em;
+  }
+
+  /* ── ANIMATION ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(7px); }
+    to   { opacity: 1; transform: translateY(0);   }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      height: 100vh;
+      z-index: 50;
+      transform: translateX(-100%);
+      width: 240px !important;
+      opacity: 1 !important;
+      pointer-events: none;
+      transition: transform 0.25s ease;
+    }
+    .sidebar-resizer { display: none; }
+
+    .sidebar.mobile-open {
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .cards-grid { grid-template-columns: 1fr 1fr; }
+    .chat-wrap  { padding: 24px 16px 20px; }
+    .input-bar  { padding: 12px 16px 18px; }
+    .home-entry-grid { grid-template-columns: 1fr; max-width: 460px; }
+    .decide-wheel-wrap { width: 236px; height: 236px; }
+    .decide-wheel-seg { transform: rotate(var(--a)) translateY(-96px) rotate(calc(-1 * var(--a))); }
+    .decide-custom-head { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .fav-city-grid,
+    .fav-custom-grid { grid-template-columns: 1fr 1fr; }
+    .fav-detail-title { font-size: 28px; }
+  }
+
+  @media (max-width: 480px) {
+    .cards-grid { grid-template-columns: 1fr; }
+
+    /* Mobile card fold: hide cards beyond #3 until user expands */
+    .mobile-fold { display: none; }
+
+    /* Sidebar: use small viewport height to avoid iOS URL-bar overlap */
+    .sidebar { height: 100svh; }
+
+    /* Input bar: add iPhone home indicator clearance */
+    .input-bar {
+      padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Header: reclaim horizontal space on small screens */
+    header { padding: 11px 14px; }
+    .logo-sub, .logo-sep { display: none; }
+
+    /* Cards: tighter padding on mobile */
+    .r-card { padding: 16px; }
+
+    .card-story { font-size: 15px; }
+    .card-suitable { padding: 10px 11px; }
+    .decide-filter-panel { padding: 12px; }
+    .decide-custom-input-row { flex-direction: column; }
+    .decide-custom-add { width: 100%; justify-content: center; }
+    .fav-view { padding-left: 16px; padding-right: 16px; }
+    .fav-city-grid,
+    .fav-custom-grid { grid-template-columns: 1fr; }
+    .fav-city-card,
+    .fav-detail-panel { border-radius: 20px; }
+    .fav-detail-hero { padding: 18px 16px 16px; min-height: 164px; }
+    .fav-detail-title { font-size: 26px; }
+    .fav-detail-list .fav-rest-row { padding-left: 16px; padding-right: 16px; }
+    .fav-meta-editor { gap: 9px; }
+
+    /* Chat wrap: less top breathing room on small screens */
+    .chat-wrap { padding-top: 20px; }
+  }
+
+  /* ── FOLLOW-UP CHIPS ── */
+  .follow-up-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .follow-up-chip {
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--label-size);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+    padding: 6px 16px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    font-weight: var(--body-weight);
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+
+  .follow-up-chip:hover {
+    background: var(--color-accent);
+    color: white;
+    border-color: var(--color-accent);
+  }
+
+  /* ── CARD FAV BUTTON ── */
+  .r-card { position: relative; }
+
+  .fav-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 26px;
+    height: 26px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s, border-color 0.15s, color 0.15s;
+    line-height: 1;
+    padding: 0;
+  }
+  .r-card:hover .fav-btn { opacity: 1; }
+  .fav-btn.saved { opacity: 1; color: var(--color-accent); border-color: #F0C4A8; background: #FFF3EE; }
+  .fav-btn:hover { background: var(--color-accent) !important; color: white !important; border-color: var(--color-accent) !important; opacity: 1; }
+
+  /* ── FAV POPOVER OVERLAY ── */
+  .fav-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26,18,9,0.38);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .fav-overlay.open { display: flex; }
+
+  .fav-panel {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    padding: 22px 20px 18px;
+    width: 300px;
+    max-width: calc(100vw - 40px);
+    box-shadow: 0 8px 36px rgba(0,0,0,0.14);
+    animation: fadeUp 0.2s ease;
+    position: relative;
+  }
+  .fav-panel-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: none;
+    border-radius: 6px;
+    color: var(--color-text-secondary);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.45;
+    transition: opacity 0.15s, color 0.15s, background 0.15s;
+  }
+  .fav-panel-close:hover {
+    opacity: 1;
+    color: var(--color-accent);
+    background: var(--color-bg);
+  }
+
+  .fav-panel-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    margin-bottom: 4px;
+  }
+
+  .fav-panel-sub {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-bottom: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .fav-collections-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 190px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+  }
+  .fav-collections-list::-webkit-scrollbar { width: 3px; }
+  .fav-collections-list::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
+
+  .fav-coll-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.12s;
+    user-select: none;
+  }
+  .fav-coll-item:hover { background: var(--color-bg); }
+
+  .fav-coll-check {
+    width: 17px;
+    height: 17px;
+    border: 1.5px solid var(--color-border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 10px;
+    color: white;
+    background: white;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .fav-coll-item.checked .fav-coll-check {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  .fav-coll-label { font-size: 14px; color: var(--color-text-main); flex: 1; }
+  .fav-coll-count-badge { font-size: 11px; color: var(--color-text-secondary); opacity: 0.55; }
+
+  .fav-new-row {
+    display: flex;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border);
+  }
+  .fav-new-input {
+    flex: 1;
+    border: 1px solid var(--color-border);
+    border-radius: var(--input-radius);
+    padding: 8px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    background: var(--color-bg);
+    color: var(--color-text-main);
+    outline: none;
+    transition: border-color 0.15s;
+    min-width: 0;
+  }
+  .fav-new-input:focus { border-color: var(--color-accent); }
+  .fav-new-input::placeholder { color: var(--color-text-secondary); opacity: 0.5; }
+
+  .fav-new-btn {
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: var(--btn-radius);
+    padding: 8px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .fav-new-btn:hover { opacity: 0.85; }
+
+  .fav-empty-hint {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    text-align: center;
+    padding: 12px 0 8px;
+    opacity: 0.6;
+  }
+
+  /* ── SIDEBAR FAVORITES ENTRY ── */
+  .sidebar-fav-divider {
+    height: 1px;
+    background: var(--color-border);
+    margin: 4px 10px;
+    opacity: 0.7;
+    flex-shrink: 0;
+  }
+  .sidebar-fav-entry {
+    margin: 4px 6px 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    border: 1px solid transparent;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+    user-select: none;
+  }
+  .sidebar-fav-entry:hover { background: rgba(0,0,0,0.05); }
+  .sidebar-fav-entry.active {
+    background: var(--color-card);
+    border-color: var(--color-border);
+    color: var(--color-accent);
+    font-weight: 500;
+  }
+
+  /* ── FAVORITES VIEW ── */
+  .fav-view {
+    display: none;
+    flex: 1;
+    overflow-y: auto;
+    padding: 36px var(--page-margin) 28px;
+    max-width: 980px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  .fav-view.active { display: block; }
+  .fav-view::-webkit-scrollbar { width: 4px; }
+  .fav-view::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
+
+  .fav-view-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--color-text-main);
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+  }
+  .fav-view-sub { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 28px; opacity: 0.7; }
+
+  .fav-section-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .fav-section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    line-height: 1.2;
+    color: var(--color-text-main);
+    letter-spacing: -0.01em;
+  }
+
+  .fav-section-sub {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+    opacity: 0.8;
+    margin-top: 4px;
+  }
+
+  .fav-city-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+
+  .fav-city-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 22px;
+    border: 1px solid rgba(224, 209, 197, 0.92);
+    background: rgba(255, 252, 248, 0.92);
+    padding: 16px;
+    box-shadow: 0 8px 24px rgba(95, 69, 46, 0.08);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .fav-city-card:hover,
+  .fav-city-card.active {
+    transform: translateY(-2px);
+    border-color: #D8B39B;
+    box-shadow: 0 12px 30px rgba(95, 69, 46, 0.12);
+  }
+
+  .fav-city-cover {
+    position: relative;
+    overflow: hidden;
+    height: 132px;
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    color: #fffaf5;
+  }
+
+  .fav-city-cover::before,
+  .fav-city-cover::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .fav-city-cover::before {
+    background:
+      radial-gradient(circle at 18% 22%, rgba(255,255,255,0.25), transparent 28%),
+      linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0));
+    mix-blend-mode: screen;
+  }
+
+  .fav-city-cover::after {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.12)),
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.06) 0 8px, rgba(255,255,255,0) 8px 16px);
+    opacity: 0.7;
+  }
+
+  .fav-city-cover-mark,
+  .fav-city-cover-title {
+    position: relative;
+    z-index: 1;
+  }
+
+  .fav-city-cover-mark {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    max-width: 88%;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-wrap: balance;
+  }
+
+  .fav-city-cover-emoji {
+    font-size: 28px;
+    line-height: 1;
+    position: relative;
+    z-index: 1;
+  }
+
+  .fav-city-cover-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    line-height: 1.2;
+    letter-spacing: 0.08em;
+    opacity: 0.74;
+  }
+
+  .fav-city-cover-badge {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    background: rgba(255, 250, 245, 0.16);
+    border: 1px solid rgba(255,255,255,0.22);
+    padding: 6px 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    line-height: 1;
+    color: #fffaf5;
+    backdrop-filter: blur(4px);
+  }
+
+  .fav-city-cover-badge strong {
+    font-weight: 500;
+  }
+
+  .fav-city-card-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    line-height: 1.2;
+    color: var(--color-text-main);
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+    word-break: break-word;
+  }
+
+  .fav-city-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .fav-city-card-count,
+  .fav-city-card-tag {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    line-height: 1;
+    border-radius: 999px;
+    padding: 5px 9px;
+  }
+
+  .fav-city-card-count {
+    color: var(--color-accent);
+    background: #FFF3EA;
+    border: 1px solid #E7C5B0;
+  }
+
+  .fav-city-card-tag {
+    color: var(--color-text-secondary);
+    background: rgba(247, 243, 238, 0.9);
+    border: 1px solid var(--color-border);
+  }
+
+  .fav-city-card-preview {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1.75;
+    color: var(--color-text-secondary);
+    min-height: 66px;
+  }
+
+  .fav-city-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .fav-card-btn,
+  .fav-card-ghost-btn {
+    border-radius: 999px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 8px 12px;
+    transition: opacity 0.15s, background 0.15s, border-color 0.15s, color 0.15s;
+  }
+
+  .fav-card-btn {
+    border: 1px solid #E3B89B;
+    background: #FFF1E8;
+    color: var(--color-accent);
+  }
+
+  .fav-card-btn:hover { opacity: 0.86; }
+
+  .fav-card-ghost-btn {
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+    color: var(--color-text-secondary);
+  }
+
+  .fav-card-ghost-btn:hover { background: var(--color-bg); }
+
+  .fav-meta-editor {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(223, 209, 197, 0.92);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .fav-meta-input {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-card);
+    color: var(--color-text-main);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 10px 13px;
+    outline: none;
+  }
+
+  .fav-meta-input:focus { border-color: var(--color-accent); }
+
+  .fav-meta-preview {
+    position: relative;
+    overflow: hidden;
+    height: 116px;
+    border-radius: 16px;
+    padding: 14px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    color: #fffaf5;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.22);
+  }
+
+  .fav-meta-preview::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.16));
+    pointer-events: none;
+  }
+
+  .fav-meta-preview-copy,
+  .fav-meta-preview-emoji {
+    position: relative;
+    z-index: 1;
+  }
+
+  .fav-meta-preview-copy {
+    max-width: 80%;
+  }
+
+  .fav-meta-preview-eyebrow {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    line-height: 1.2;
+    letter-spacing: 0.08em;
+    opacity: 0.78;
+    margin-bottom: 7px;
+  }
+
+  .fav-meta-preview-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .fav-meta-preview-emoji {
+    font-size: 26px;
+    line-height: 1;
+  }
+
+  .fav-meta-upload-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .fav-upload-btn,
+  .fav-upload-remove {
+    border-radius: 999px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 8px 12px;
+    transition: opacity 0.15s, background 0.15s, border-color 0.15s, color 0.15s;
+  }
+
+  .fav-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-border);
+    background: rgba(255,255,255,0.8);
+    color: var(--color-text-secondary);
+  }
+
+  .fav-upload-btn:hover { background: var(--color-bg); }
+
+  .fav-upload-remove {
+    border: 1px solid #E9BCA0;
+    background: #FFF3EE;
+    color: var(--color-accent);
+  }
+
+  .fav-upload-remove:hover { opacity: 0.86; }
+
+  .fav-upload-input {
+    display: none;
+  }
+
+  .fav-meta-hint {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+    opacity: 0.72;
+  }
+
+  .fav-cover-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .fav-cover-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: rgba(255,255,255,0.72);
+    padding: 7px 10px 7px 8px;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .fav-cover-chip:hover,
+  .fav-cover-chip.active {
+    transform: translateY(-1px);
+    border-color: #D8B39B;
+    background: #FFF8F2;
+  }
+
+  .fav-cover-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.55);
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04);
+  }
+
+  .fav-cover-name {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    line-height: 1;
+  }
+
+  .fav-detail-panel {
+    margin-bottom: 28px;
+    background: rgba(255, 252, 247, 0.95);
+    border: 1px solid rgba(224, 209, 197, 0.92);
+    border-radius: 24px;
+    box-shadow: 0 10px 30px rgba(95, 69, 46, 0.08);
+    overflow: hidden;
+    animation: fadeUp 0.25s ease;
+  }
+
+  .fav-detail-hero {
+    position: relative;
+    min-height: 108px;
+    padding: 18px 22px 16px;
+    color: #fffaf5;
+  }
+
+  .fav-detail-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.12));
+    pointer-events: none;
+  }
+
+  .fav-detail-hero > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .fav-detail-eyebrow {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.82;
+    margin-bottom: 8px;
+  }
+
+  .fav-detail-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+
+  .fav-detail-sub {
+    max-width: 620px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    line-height: 1.7;
+    opacity: 0.9;
+  }
+
+  .fav-detail-list {
+    padding: 10px 0 0;
+  }
+
+  .fav-detail-list .fav-rest-row {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+
+  .fav-detail-empty {
+    padding: 24px 22px 28px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+  }
+
+  .fav-block {
+    margin-bottom: 28px;
+  }
+
+  .fav-custom-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .fav-coll-section {
+    margin-bottom: 20px;
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--card-radius);
+    overflow: hidden;
+    animation: fadeUp 0.25s ease;
+  }
+
+  .fav-coll-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .fav-coll-header:hover { background: var(--color-bg); }
+  .fav-coll-section.expanded .fav-coll-header { border-bottom: 1px solid var(--color-border); }
+  .fav-coll-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    flex: 1;
+  }
+  .fav-coll-badge {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 100px;
+    padding: 2px 9px;
+  }
+  .fav-coll-del-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    font-size: 18px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.15s, opacity 0.15s;
+    opacity: 0.35;
+  }
+  .fav-coll-del-btn:hover { color: var(--color-accent); opacity: 1; }
+  .fav-coll-edit-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.15s, opacity 0.15s;
+    opacity: 0.4;
+  }
+  .fav-coll-edit-btn:hover { color: var(--color-accent); opacity: 1; }
+  .fav-coll-toggle {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    opacity: 0.75;
+    transition: transform 0.15s ease;
+    line-height: 1;
+  }
+  .fav-coll-section.expanded .fav-coll-toggle { transform: rotate(180deg); }
+
+  .fav-coll-delete-confirm {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 18px;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-bg);
+  }
+  .fav-coll-delete-text {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+  }
+  .fav-coll-delete-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .fav-coll-confirm-btn,
+  .fav-coll-cancel-btn {
+    border-radius: 999px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 8px 12px;
+    transition: opacity 0.15s, background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .fav-coll-confirm-btn {
+    border: 1px solid #E9BCA0;
+    background: #FFF3EE;
+    color: var(--color-accent);
+  }
+  .fav-coll-confirm-btn:hover { opacity: 0.85; }
+  .fav-coll-cancel-btn {
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+    color: var(--color-text-secondary);
+  }
+  .fav-coll-cancel-btn:hover { background: var(--color-bg); }
+  .fav-coll-rename-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 18px;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-bg);
+  }
+  .fav-coll-rename-input {
+    flex: 1;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-card);
+    color: var(--color-text-main);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 8px 12px;
+    outline: none;
+    min-width: 0;
+  }
+  .fav-coll-rename-input:focus { border-color: var(--color-accent); }
+  .fav-coll-rename-save,
+  .fav-coll-rename-cancel {
+    border-radius: 999px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 8px 12px;
+    transition: opacity 0.15s, background 0.15s;
+  }
+  .fav-coll-rename-save {
+    border: 1px solid #E9BCA0;
+    background: #FFF3EE;
+    color: var(--color-accent);
+  }
+  .fav-coll-rename-save:hover { opacity: 0.85; }
+  .fav-coll-rename-cancel {
+    border: 1px solid var(--color-border);
+    background: var(--color-card);
+    color: var(--color-text-secondary);
+  }
+  .fav-coll-rename-cancel:hover { background: var(--color-bg); }
+
+  .fav-rest-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 13px 18px;
+    gap: 10px;
+    border-bottom: 1px solid var(--color-border);
+    transition: background 0.12s;
+  }
+  .fav-rest-row:last-child { border-bottom: none; }
+  .fav-rest-row:hover { background: var(--color-bg); }
+
+  .fav-rest-info { flex: 1; min-width: 0; }
+  .fav-rest-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    margin-bottom: 4px;
+  }
+  .fav-rest-meta { font-size: 12px; color: var(--color-text-secondary); line-height: 1.7; }
+  .fav-rest-link {
+    display: inline-block;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-color: var(--color-border);
+    cursor: pointer;
+    transition: color 0.15s;
+    margin-top: 3px;
+  }
+  .fav-rest-link:hover { color: var(--color-accent); text-decoration-color: var(--color-accent); }
+  .fav-rest-del {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    font-size: 16px;
+    padding: 1px 4px;
+    border-radius: 4px;
+    opacity: 0.35;
+    transition: opacity 0.15s, color 0.15s;
+    flex-shrink: 0;
+    margin-top: 2px;
+    line-height: 1;
+  }
+  .fav-rest-del:hover { opacity: 1; color: var(--color-accent); }
+
+  .fav-rest-tagline {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .fav-rest-mini-tag {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    line-height: 1;
+    color: var(--color-text-secondary);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 4px 7px;
+  }
+
+  .fav-empty-state {
+    text-align: center;
+    padding: 60px 20px 40px;
+    animation: fadeUp 0.3s ease;
+  }
+  .fav-empty-icon { font-size: 38px; margin-bottom: 16px; opacity: 0.3; }
+  .fav-empty-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--color-text-main);
+    margin-bottom: 8px;
+  }
+  .fav-empty-sub { font-size: 13px; color: var(--color-text-secondary); opacity: 0.65; line-height: 1.7; }
+  .fav-hint {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%);
+    max-width: calc(100vw - 36px);
+    background: rgba(122, 104, 88, 0.86);
+    color: #FFF7F1;
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 999px;
+    padding: 9px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s;
+    z-index: 260;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .fav-hint.show { opacity: 1; }
+
+  /* ── RESTAURANT GROUP (share button row) ── */
+  .restaurant-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .restaurant-group-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 8px;
+  }
+
+  .share-group-btn {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: 100px;
+    padding: 4px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    letter-spacing: 0.02em;
+    line-height: 1.6;
+    opacity: 0.7;
+  }
+
+  .share-group-btn:hover {
+    background: var(--color-accent);
+    color: white;
+    border-color: var(--color-accent);
+    opacity: 1;
+  }
+
+  /* ── SHARE PANEL OVERLAY ── */
+  .share-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26,18,9,0.4);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+  }
+  .share-overlay.open { display: flex; }
+
+  .share-panel {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    padding: 24px 22px 20px;
+    width: 360px;
+    max-width: calc(100vw - 40px);
+    max-height: calc(100vh - 100px);
+    box-shadow: 0 12px 48px rgba(0,0,0,0.16);
+    animation: fadeUp 0.2s ease;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .share-panel-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-text-main);
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+
+  .share-panel-sub {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  .share-rest-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 16px;
+    max-height: 260px;
+  }
+  .share-rest-list::-webkit-scrollbar { width: 3px; }
+  .share-rest-list::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
+
+  .share-rest-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.12s;
+    user-select: none;
+  }
+  .share-rest-item:hover { background: var(--color-bg); }
+
+  .share-rest-check {
+    width: 17px;
+    height: 17px;
+    border: 1.5px solid var(--color-border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 10px;
+    color: white;
+    background: white;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .share-rest-item.checked .share-rest-check {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  .share-rest-label { flex: 1; min-width: 0; }
+  .share-rest-name {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--color-text-main);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .share-rest-meta {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .share-panel-actions {
+    display: flex;
+    gap: 8px;
+    padding-top: 14px;
+    border-top: 1px solid var(--color-border);
+    flex-shrink: 0;
+  }
+
+  .share-cancel-btn {
+    flex: 1;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--btn-radius);
+    padding: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background 0.15s;
+    font-weight: 400;
+  }
+  .share-cancel-btn:hover { background: var(--color-border); }
+
+  .share-confirm-btn {
+    flex: 2;
+    background: var(--color-accent);
+    border: none;
+    border-radius: var(--btn-radius);
+    padding: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: white;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .share-confirm-btn:hover:not(:disabled) { opacity: 0.85; }
+  .share-confirm-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* ── SAFARI AUTO-ZOOM FIX: inputs must be ≥ 16px on mobile ── */
+  @media (max-width: 900px) {
+    textarea { font-size: 16px; }
+    .fav-new-input { font-size: 16px; }
+    .decide-custom-input { font-size: 16px; }
+  }
+
+  /* ── TOUCH DEVICES: fav button always visible ── */
+  @media (hover: none) {
+    .fav-btn { opacity: 0.6; }
+  }
+
+  /* ── MOBILE CARD EXPAND BUTTON ── */
+  .cards-more-btn {
+    display: none;
+    width: 100%;
+    margin-top: 10px;
+    padding: 13px 16px;
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--card-radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    letter-spacing: 0.01em;
+  }
+  .cards-more-btn:hover,
+  .cards-more-btn:active {
+    background: var(--color-bg);
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+  @media (max-width: 480px) {
+    .cards-more-btn { display: block; }
+    .fav-coll-delete-confirm {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .fav-coll-delete-actions { width: 100%; }
+    .fav-coll-confirm-btn,
+    .fav-coll-cancel-btn {
+      flex: 1;
+      text-align: center;
+    }
+    .fav-coll-rename-row { flex-wrap: wrap; }
+    .fav-coll-rename-input { width: 100%; }
+    .fav-coll-rename-save,
+    .fav-coll-rename-cancel { flex: 1; text-align: center; }
+    .fav-hint {
+      bottom: 20px;
+      max-width: calc(100vw - 24px);
+      padding: 9px 14px;
+    }
+  }
+</style>
+  /* ── DEMO MODE BADGE ── */
+  .demo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 4px 10px;
+    opacity: 0.55;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .demo-badge::before {
+    content: '';
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #C4622D;
+    opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="app-shell">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-logo">觅食官</span>
+      <button class="new-chat-btn" id="newChatBtn" title="新建对话">＋</button>
+    </div>
+    <div class="sidebar-list" id="sidebarList"></div>
+    <div class="sidebar-fav-divider"></div>
+    <div class="sidebar-fav-entry" id="favEntry">
+      <span style="font-size:14px;">♡</span>
+      <span>我的收藏</span>
+    </div>
+  </aside>
+  <div class="sidebar-resizer" id="sidebarResizer" aria-hidden="true"></div>
+
+  <div class="main-area">
+
+    <header>
+      <button class="hamburger-btn" id="hamburgerBtn" aria-label="切换侧边栏">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="logo-name">觅食官</div>
+      <div class="logo-sep"></div>
+      <div class="logo-sub">Find good food, anywhere</div>
+      <span class="demo-badge">Demo Mode</span>
+    </header>
+
+    <div class="chat-wrap" id="chatWrap"></div>
+
+    <div class="input-bar" id="inputBar">
+      <div class="input-inner">
+        <textarea id="inp" placeholder="试试：Berlin solo ramen · Paris date bistro · London casual dinner…" rows="1"></textarea>
+        <button class="send-btn" id="btn">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+      <p class="foot-note">Demo · 数据为演示用途</p>
+    </div>
+
+  </div>
+</div>
+
+<div class="fav-overlay" id="favOverlay">
+  <div class="fav-panel" id="favPanel">
+    <button class="fav-panel-close" id="favPanelClose" aria-label="关闭">×</button>
+    <div class="fav-panel-title">保存到合集</div>
+    <div class="fav-panel-sub" id="favPanelSub"></div>
+    <div class="fav-collections-list" id="favCollsList"></div>
+    <div class="fav-new-row">
+      <input class="fav-new-input" id="favNewInput" placeholder="新建合集名称" autocomplete="off" />
+      <button class="fav-new-btn" id="favNewBtn">添加</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── DEMO MOCK DATA ── */
+const MOCK_RESPONSES = {
+  berlin: `🍽️ **Cocolo Ramen Mitte**
+⭐ 4.6（1842条评价）
+📍 Karl-Liebknecht-Str. 9, 10178 Berlin Mitte
+🕐 周一至周日 11:30–22:30
+
+适合你：
+吧台座位多，一个人进来不会尴尬，专注感强
+
+推荐语：
+在柏林能喝到这种浓度的博多豚骨很难得。下午两三点的低峰期进去，一碗叉烧拉面配半熟蛋，窗外是柏林的日常街景，适合自己发呆。
+
+小提醒：
+周末晚高峰排队约 20 分钟，不接受预订。叉烧分量比日本本土小一点，但价格在柏林属于实在（12–15€）。
+
+[查看地图](https://www.google.com/maps/search/Cocolo+Ramen+Berlin)
+
+🍽️ **Noodle Kitchen Berlin**
+⭐ 4.4（763条评价）
+📍 Skalitzer Str. 27, 10999 Berlin Kreuzberg
+🕐 周二至周日 12:00–22:00
+
+适合你：
+Kreuzberg 氛围随性，一个人坐进去不用解释什么
+
+推荐语：
+拉面汤底比正统日式清淡一点，但配合柏林的口味做了微调。麻辣版本意外地地道，灯光昏黄，背景音乐是 city pop。点一碗坐两小时也不会有人催。
+
+小提醒：
+周一休息。晚上七八点后座位紧张，建议提前到。现金和刷卡都可以。
+
+[查看地图](https://www.google.com/maps/search/Noodle+Kitchen+Berlin)
+
+🍽️ **Takumi Berlin Mitte**
+⭐ 4.5（408条评价）
+📍 Torstraße 61, 10119 Berlin Mitte
+🕐 周四至周日 12:00–21:00（售完即止）
+
+适合你：
+如果你对拉面有执念，这里是柏林最认真的汤底
+
+推荐语：
+汤头每天现熬，老板是日本人，一个人进来会主动安排在吧台最好的位置。碗偏小但精致，适合吃完还想再来一碗的心情。
+
+小提醒：
+仅周四至周日营业，建议 12 点左右去。太晚可能售完，不预订。
+
+[查看地图](https://www.google.com/maps/search/Takumi+Berlin)`,
+
+  paris: `🍽️ **Le Baratin**
+⭐ 4.7（1103条评价）
+📍 3 Rue Jouye-Rouve, 75020 Paris Belleville
+🕐 周二至周六 12:00–14:30, 19:00–22:30
+
+适合你：
+真正的巴黎老派情调，不做作，适合有话聊的约会
+
+推荐语：
+Belleville 山丘上的老派酒馆，铁皮吊灯、黑板菜单、小圆桌。主厨是个阿根廷女人，菜单每天写在黑板上。来这里的人都是老客，但陌生人也会被善待。两个人点一瓶自然酒，可以聊到打烊。
+
+小提醒：
+必须提前预订，热门夜晚提前一周也可能满。周日周一不开。价位中等偏上（人均 50€+）。
+
+[查看地图](https://www.google.com/maps/search/Le+Baratin+Paris)
+
+🍽️ **Septime**
+⭐ 4.8（2241条评价）
+📍 80 Rue de Charonne, 75011 Paris
+🕐 周一至周五 12:15–14:00, 19:30–21:30
+
+适合你：
+如果这次约会想留下深刻印象，这是 Paris 最值得的一餐
+
+推荐语：
+巴黎最难订的餐厅之一，但真的值得。菜单是当天采购的食材决定，厨师会来桌边简单介绍。空间安静，两个人之间的对话不会被打扰。
+
+小提醒：
+提前至少三周在官网预订，周五晚更难。价位较高（人均 80–120€），在这个水准完全值。
+
+[查看地图](https://www.google.com/maps/search/Septime+Paris)
+
+🍽️ **Bistrot Paul Bert**
+⭐ 4.6（988条评价）
+📍 18 Rue Paul Bert, 75011 Paris
+🕐 周二至周六 12:00–14:00, 19:30–23:00
+
+适合你：
+不想太正式，但希望有真正的巴黎餐厅氛围
+
+推荐语：
+红色地铁椅、大镜子、法式鸭胸和焦糖布丁。服务员带着那种巴黎式的冷淡，但偶尔会开个玩笑。你不会在这里被 rush，一顿饭可以吃两小时。
+
+小提醒：
+提前 1–2 天预订通常够。价位中等（人均 40–60€），steak-frites 是招牌。
+
+[查看地图](https://www.google.com/maps/search/Bistrot+Paul+Bert+Paris)`,
+
+  london: `🍽️ **Padella**
+⭐ 4.7（3821条评价）
+📍 6 Southwark St, London SE1 1TQ Borough Market
+🕐 周一至周六 12:00–15:45, 17:30–22:00
+
+适合你：
+随意、好吃、不贵，Borough Market 附近完美的落脚点
+
+推荐语：
+不接受预订，但队伍移动很快。手工意面，pappardelle 配八小时炖牛肉，是 London 排队最值得的那种餐厅。座位紧凑，和邻桌离得很近，但氛围很活，不会觉得尴尬。
+
+小提醒：
+周末下午五点半刚开门时等待最短。带现金备用。人均 20–30£，物超所值。
+
+[查看地图](https://www.google.com/maps/search/Padella+London)
+
+🍽️ **Bao Soho**
+⭐ 4.5（2109条评价）
+📍 53 Lexington St, London W1F 9AS Soho
+🕐 周一至周六 12:00–15:00, 17:30–22:30
+
+适合你：
+轻松随意，想吃点不一样的，不用费心挑菜
+
+推荐语：
+台湾风格的 bao 在 Soho 有了自己的个性。经典猪肉 bao 配炸鸡，点三四样小食，一顿饭有层次。店内设计很有质感，坐在吧台看厨师工作也很好玩。
+
+小提醒：
+不接受预订，建议 5:30 开门前 10 分钟到。Soho 周末特别忙，提前去或接受排队。
+
+[查看地图](https://www.google.com/maps/search/Bao+Soho+London)
+
+🍽️ **Kiln**
+⭐ 4.6（1547条评价）
+📍 58 Brewer St, London W1F 9TL Soho
+🕐 周一至周六 12:00–14:30, 17:30–22:30
+
+适合你：
+吃腻了普通 Thai，想要真的有烟火气的那种
+
+推荐语：
+全部在开放式烧烤台上现做，坐吧台看厨师用柴火烹饪是体验的一部分。猪颈肉配 nam jim、clam with chili jam，每道菜都有点野。适合享受吃本身。
+
+小提醒：
+不预订。高峰期等位约 30 分钟，留名后可以在 Soho 附近逛一逛。人均 30–40£。
+
+[查看地图](https://www.google.com/maps/search/Kiln+London+Soho)`,
+
+  munich: `🍽️ **Tian München**
+⭐ 4.6（1231条评价）
+📍 Frauenstr. 4, 80469 München
+🕐 周二至周日 18:00–22:30
+
+适合你：
+如果你想让一顿素食晚餐有正式感，这是 Munich 最对的选择
+
+推荐语：
+这座城市最认真的素食餐厅。菜单完全随季节变化，摆盘接近 fine dining 的标准，但价格没有贵到离谱。对素食抱有偏见的人吃完之后通常会沉默一会。
+
+小提醒：
+建议提前预订，周末晚上很紧张。提供套餐（4–6 道，50–80€）和单点，可提前告知是否纯素。
+
+[查看地图](https://www.google.com/maps/search/Tian+München)
+
+🍽️ **Max Pett**
+⭐ 4.5（872条评价）
+📍 Pettenkoferstr. 8, 80336 München
+🕐 周一至周六 11:30–22:00
+
+适合你：
+不想正式，只想吃一顿好吃的素食晚饭，不费脑
+
+推荐语：
+慕尼黑老牌素食餐厅，菜单很宽，汉堡、亚洲菜、德式料理都有素食版本。价格实在（人均 15–25€）。seitan schnitzel 是招牌，可以先点这个。
+
+小提醒：
+无需预订，随走随坐。全素（vegan）可以直接告诉服务员，他们会圈出菜单。
+
+[查看地图](https://www.google.com/maps/search/Max+Pett+München)
+
+🍽️ **Bodhi München**
+⭐ 4.4（634条评价）
+📍 Lindwurmstr. 33, 80337 München
+🕐 周一至周六 11:00–21:30
+
+适合你：
+想吃亚洲素食，便宜，快，不用费心
+
+推荐语：
+亚洲风格的素食快餐，但食材新鲜、口味调得好。越南风格的汤粉、炒饭、spring rolls，都有素食或全素版本。吃半小时够了。
+
+小提醒：
+价位很低（人均 10–18€），人气高但翻台快。现金优先，刷卡也行。
+
+[查看地图](https://www.google.com/maps/search/Bodhi+München)`
+};
+
+const FOLLOW_UP_CHIPS = {
+  berlin: ['还有哪些选择？', '更适合约会的？', '不排队的？'],
+  paris: ['预算再低一点？', '午餐去哪里？', '附近还有什么？'],
+  london: ['预订更方便的？', '更安静一点的？', 'Soho 附近还有？'],
+  munich: ['午餐去哪里？', '纯素选择？', '价格再低一点？']
+};
+
+const WELCOME_CHIPS = [
+  'Berlin solo ramen',
+  'Paris date bistro',
+  'London casual dinner',
+  'Munich vegan dinner',
+];
+
+/* ── SESSION STATE ── */
+const STORAGE_KEY = 'demo_sessions_v1';
+const FAVS_KEY = 'misshiguan_favorites_v2';
+let sessions = [];
+let currentSessionId = null;
+let busy = false;
+let _favPopoverRestaurant = null;
+
+/* ── SESSION HELPERS ── */
+function loadSessions() {
+  try { const r = localStorage.getItem(STORAGE_KEY); sessions = r ? JSON.parse(r) : []; } catch { sessions = []; }
+}
+function saveSessions() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions)); } catch {}
+}
+function getCurrentSession() {
+  return sessions.find(s => s.id === currentSessionId) || null;
+}
+function newSession() {
+  const session = {
+    id: 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2,5),
+    title: '新对话',
+    messages: [],
+    sid: 'sid_' + Math.random().toString(36).substr(2,9)
+  };
+  sessions.push(session);
+  saveSessions();
+  currentSessionId = session.id;
+  renderMessages();
+  renderSidebar();
+  document.getElementById('inp').focus();
+}
+function switchSession(id) {
+  if (id === currentSessionId) return;
+  currentSessionId = id;
+  renderMessages();
+  renderSidebar();
+}
+function deleteSession(id) {
+  sessions = sessions.filter(s => s.id !== id);
+  saveSessions();
+  if (currentSessionId === id) {
+    currentSessionId = sessions.length ? sessions[sessions.length - 1].id : null;
+    if (!currentSessionId) newSession(); else renderMessages();
+  }
+  renderSidebar();
+}
+
+/* ── FAV HELPERS ── */
+function loadFavs() {
+  try { const r = localStorage.getItem(FAVS_KEY); return r ? JSON.parse(r) : {}; } catch { return {}; }
+}
+function saveFavs(f) {
+  try { localStorage.setItem(FAVS_KEY, JSON.stringify(f)); } catch {}
+}
+function favKey(name, address) { return (name||'').trim() + '||' + (address||'').trim(); }
+function isFavorited(name, address) {
+  const k = favKey(name, address);
+  return Object.values(loadFavs()).some(list => list.some(r => favKey(r.name, r.address) === k));
+}
+function getRestaurantCollections(name, address) {
+  const k = favKey(name, address), f = loadFavs();
+  return Object.keys(f).filter(c => f[c].some(r => favKey(r.name, r.address) === k));
+}
+function setRestaurantInCollection(restaurant, collName, shouldAdd) {
+  const f = loadFavs(), k = favKey(restaurant.name, restaurant.address);
+  if (!f[collName]) f[collName] = [];
+  const idx = f[collName].findIndex(r => favKey(r.name, r.address) === k);
+  if (shouldAdd) {
+    if (idx === -1) f[collName].push({ name: restaurant.name, rating: restaurant.rating, address: restaurant.address, mapUrl: restaurant.mapUrl, savedAt: Date.now() });
+  } else {
+    if (idx !== -1) f[collName].splice(idx, 1);
+    if (f[collName].length === 0) delete f[collName];
+  }
+  saveFavs(f);
+}
+function addToNewCollection(collName, restaurant) {
+  collName = collName.trim(); if (!collName) return false;
+  const f = loadFavs(), k = favKey(restaurant.name, restaurant.address);
+  if (!f[collName]) f[collName] = [];
+  let added = false;
+  if (!f[collName].some(r => favKey(r.name, r.address) === k)) {
+    f[collName].push({ name: restaurant.name, rating: restaurant.rating, address: restaurant.address, mapUrl: restaurant.mapUrl, savedAt: Date.now() });
+    added = true;
+  }
+  saveFavs(f); return added;
+}
+function refreshAllCardFavStates() {
+  document.querySelectorAll('.fav-btn').forEach(btn => {
+    const saved = isFavorited(btn.dataset.name, btn.dataset.address);
+    btn.classList.toggle('saved', saved);
+    btn.textContent = saved ? '♥' : '♡';
+    btn.title = saved ? '已收藏' : '收藏';
+  });
+}
+
+/* ── FAV POPOVER ── */
+function openFavPopover(restaurant) {
+  _favPopoverRestaurant = restaurant;
+  document.getElementById('favPanelSub').textContent = restaurant.name || '';
+  renderFavPopover();
+  document.getElementById('favOverlay').classList.add('open');
+  document.getElementById('favNewInput').value = '';
+}
+function closeFavPopover() {
+  document.getElementById('favOverlay').classList.remove('open');
+  _favPopoverRestaurant = null;
+  refreshAllCardFavStates();
+}
+function renderFavPopover() {
+  const r = _favPopoverRestaurant; if (!r) return;
+  const f = loadFavs();
+  const checked = getRestaurantCollections(r.name, r.address);
+  const allColls = Object.keys(f);
+  const listEl = document.getElementById('favCollsList');
+  listEl.innerHTML = '';
+  if (allColls.length === 0) {
+    const hint = document.createElement('div');
+    hint.className = 'fav-empty-hint';
+    hint.textContent = '还没有合集，请先新建一个';
+    listEl.appendChild(hint);
+    return;
+  }
+  allColls.forEach(coll => {
+    const isChecked = checked.includes(coll);
+    const item = document.createElement('div');
+    item.className = 'fav-coll-item' + (isChecked ? ' checked' : '');
+    item.innerHTML = `<div class="fav-coll-check">${isChecked ? '✓' : ''}</div><span class="fav-coll-label">${esc(coll)}</span><span class="fav-coll-count-badge">${f[coll].length}</span>`;
+    item.addEventListener('click', () => {
+      const nowChecked = item.classList.contains('checked');
+      setRestaurantInCollection(r, coll, !nowChecked);
+      renderFavPopover();
+      if (!nowChecked) showFavHint(`已收藏到「${coll}」`);
+    });
+    listEl.appendChild(item);
+  });
+}
+function initFavPopover() {
+  document.getElementById('favOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('favOverlay')) closeFavPopover();
+  });
+  document.getElementById('favNewBtn').addEventListener('click', doAddNewCollection);
+  document.getElementById('favNewInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doAddNewCollection();
+  });
+  document.getElementById('favPanelClose').addEventListener('click', closeFavPopover);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('favOverlay').classList.contains('open')) closeFavPopover();
+  });
+}
+function doAddNewCollection() {
+  const inp = document.getElementById('favNewInput');
+  const name = inp.value.trim();
+  if (!name || !_favPopoverRestaurant) return;
+  const added = addToNewCollection(name, _favPopoverRestaurant);
+  inp.value = '';
+  renderFavPopover();
+  if (added) showFavHint(`已收藏到「${name}」`);
+  else showFavHint(`「${name}」里已存在这家店`);
+}
+function showFavHint(msg) {
+  let hint = document.getElementById('favHint');
+  if (!hint) {
+    hint = document.createElement('div');
+    hint.id = 'favHint';
+    hint.className = 'fav-hint';
+    document.body.appendChild(hint);
+  }
+  hint.textContent = msg;
+  hint.classList.add('show');
+  clearTimeout(hint._timer);
+  hint._timer = setTimeout(() => { hint.classList.remove('show'); }, 1800);
+}
+
+/* ── UTILS ── */
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function scroll() {
+  const c = document.getElementById('chatWrap');
+  setTimeout(() => c.scrollTop = c.scrollHeight, 60);
+}
+function resize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 130) + 'px';
+}
+function starStr(r) {
+  if (!r) return '';
+  const n = parseFloat(r), f = Math.floor(n);
+  return '★'.repeat(f) + (n%1>=0.5?'½':'') + '☆'.repeat(5-f-(n%1>=0.5?1:0));
+}
+
+/* ── PARSE RESTAURANTS ── */
+function matchRestaurantField(block, labels) {
+  for (const label of labels) {
+    const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = block.match(new RegExp(`(?:^|\\n)${escaped}\\s*[：:]\\s*([^\\n]+)`));
+    if (match && match[1]) return match[1].trim();
+  }
+  return null;
+}
+function parseRestaurants(text) {
+  const cleanText = String(text || '');
+  const blocks = cleanText.split(/(?=🍽️)/);
+  const restaurants = [], others = [];
+  blocks.forEach(b => {
+    b = b.trim(); if (!b) return;
+    if (b.startsWith('🍽️')) {
+      const nm = b.match(/🍽️\s*\*?\*?([^\n*]+)\*?\*?/);
+      const rt = b.match(/⭐\s*([\d.]+)(?:\s*[（(]([^)）]+)[)）])?/);
+      const ad = b.match(/📍\s*([^\n]+)/);
+      const hr = b.match(/🕐\s*([^\n]+)/);
+      const lk = b.match(/\[([^\]]*(?:Google Maps|查看)[^\]]*)\]\((https?:\/\/[^\)]+)\)/i);
+      const suitableReason = matchRestaurantField(b, ['适合你']);
+      const warmRecommendation = matchRestaurantField(b, ['推荐语']);
+      const reviewSignal = matchRestaurantField(b, ['小提醒']);
+      if (nm) {
+        restaurants.push({
+          name: nm[1].trim(),
+          rating: rt ? rt[1] : null,
+          ratingCount: rt && rt[2] ? rt[2].trim() : null,
+          address: ad ? ad[1].trim() : null,
+          hours: hr ? hr[1].trim() : null,
+          suitableReason,
+          warmRecommendation,
+          reviewSignal,
+          mapUrl: lk ? lk[2] : null,
+        });
+      }
+    } else {
+      others.push(b);
+    }
+  });
+  return { restaurants, others };
+}
+
+function renderRestaurantRating(r) {
+  if (!r || !r.rating) return '';
+  return `<div class="card-rating">
+    <span class="card-stars">${starStr(r.rating)}</span>
+    <span class="card-score">&thinsp;${esc(r.rating)} 分</span>
+    ${r.ratingCount ? `<span class="card-rating-count">(${esc(r.ratingCount)})</span>` : ''}
+  </div>`;
+}
+
+function renderRestaurantReasoning(r) {
+  if (!r) return '';
+  const parts = [];
+  if (r.suitableReason) {
+    parts.push(`<div class="card-suitable"><div class="card-suitable-label">适合你</div><div class="card-suitable-text">${esc(r.suitableReason)}</div></div>`);
+  }
+  if (r.warmRecommendation) {
+    parts.push(`<div class="card-story">${esc(r.warmRecommendation)}</div>`);
+  }
+  if (r.reviewSignal) {
+    parts.push(`<div class="card-note"><span class="card-note-label">小提醒</span>${esc(r.reviewSignal)}</div>`);
+  }
+  return parts.length ? `<div class="card-reasoning">${parts.join('')}</div>` : '';
+}
+
+/* ── RENDER ── */
+function renderSidebar() {
+  const list = document.getElementById('sidebarList');
+  list.innerHTML = '';
+  [...sessions].reverse().forEach(s => {
+    const item = document.createElement('div');
+    item.className = 'session-item' + (s.id === currentSessionId ? ' active' : '');
+    const title = document.createElement('span');
+    title.className = 'session-title';
+    title.textContent = s.title;
+    const del = document.createElement('button');
+    del.className = 'session-del';
+    del.textContent = '×';
+    del.title = '删除';
+    del.addEventListener('click', e => { e.stopPropagation(); deleteSession(s.id); });
+    item.appendChild(title);
+    item.appendChild(del);
+    item.addEventListener('click', () => switchSession(s.id));
+    list.appendChild(item);
+  });
+}
+
+function renderMessages() {
+  const c = document.getElementById('chatWrap');
+  c.innerHTML = '';
+  const session = getCurrentSession();
+  if (!session || session.messages.length === 0) {
+    renderWelcome();
+    return;
+  }
+  session.messages.forEach(msg => {
+    if (msg.role === 'user') appendUserBubble(msg.text);
+    else appendBotBubbles(msg.text);
+  });
+  scroll();
+}
+
+function renderWelcome() {
+  const c = document.getElementById('chatWrap');
+  c.innerHTML = '';
+  const welcome = document.createElement('div');
+  welcome.className = 'welcome';
+  welcome.innerHTML = `
+    <div class="welcome-eyebrow">觅食官 · Demo</div>
+    <h2>找到真正适合你的那家</h2>
+    <p class="welcome-mode-sub">不是评分最高，而是最符合此刻的你</p>
+    <div class="chips" id="welcomeChips"></div>
+  `;
+  c.appendChild(welcome);
+  const chipsEl = welcome.querySelector('#welcomeChips');
+  WELCOME_CHIPS.forEach(label => {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.textContent = label;
+    chip.addEventListener('click', () => suggest(label));
+    chipsEl.appendChild(chip);
+  });
+}
+
+function appendUserBubble(text) {
+  const c = document.getElementById('chatWrap');
+  const d = document.createElement('div');
+  d.className = 'msg-row user';
+  d.innerHTML = `<div class="av user-av">你</div><div class="user-bubble">${esc(text)}</div>`;
+  c.appendChild(d);
+}
+
+function appendBotBubbles(text) {
+  const c = document.getElementById('chatWrap');
+  const { restaurants, others } = parseRestaurants(text);
+  const row = document.createElement('div');
+  row.className = 'msg-row';
+  row.style.alignItems = 'flex-start';
+  const av = document.createElement('div');
+  av.className = 'av'; av.textContent = '觅';
+  const wrap = document.createElement('div');
+  wrap.className = 'bot-wrap';
+
+  if (restaurants.length > 0) {
+    others.forEach(t => {
+      t = t.trim(); if (!t) return;
+      const p = document.createElement('div');
+      p.className = 'plain-bubble';
+      p.innerHTML = t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+      wrap.appendChild(p);
+    });
+    const group = document.createElement('div');
+    group.className = 'restaurant-group';
+    const grid = document.createElement('div');
+    grid.className = 'cards-grid';
+    restaurants.forEach((r, i) => {
+      const card = document.createElement('div');
+      card.className = 'r-card' + (i >= 3 ? ' mobile-fold' : '');
+      card.style.animationDelay = (i * 0.07) + 's';
+      const saved = isFavorited(r.name, r.address);
+      const narrativeHtml = renderRestaurantReasoning(r);
+      card.innerHTML = `
+        <div class="card-index">${String(i + 1).padStart(2, '0')}</div>
+        <div class="card-name">${esc(r.name)}</div>
+        ${renderRestaurantRating(r)}
+        ${r.address ? `<div class="card-meta"><span class="meta-icon">📍</span><span>${esc(r.address)}</span></div>` : ''}
+        ${r.hours   ? `<div class="card-meta"><span class="meta-icon">🕐</span><span>${esc(r.hours)}</span></div>` : ''}
+        ${narrativeHtml ? `<hr class="card-divider">${narrativeHtml}` : ''}
+        ${r.mapUrl  ? `<a class="card-link" href="${r.mapUrl}" target="_blank">查看地图 →</a>` : ''}
+      `;
+      const favBtn = document.createElement('button');
+      favBtn.className = 'fav-btn' + (saved ? ' saved' : '');
+      favBtn.title = saved ? '已收藏' : '收藏';
+      favBtn.textContent = saved ? '♥' : '♡';
+      favBtn.dataset.name = r.name || '';
+      favBtn.dataset.address = r.address || '';
+      favBtn.addEventListener('click', e => { e.stopPropagation(); openFavPopover(r); });
+      card.appendChild(favBtn);
+      grid.appendChild(card);
+    });
+    group.appendChild(grid);
+    if (restaurants.length > 3) {
+      const moreBtn = document.createElement('button');
+      moreBtn.className = 'cards-more-btn';
+      moreBtn.textContent = `还有 ${restaurants.length - 3} 家推荐，点击查看 ↓`;
+      moreBtn.addEventListener('click', () => {
+        grid.querySelectorAll('.mobile-fold').forEach(c => c.classList.remove('mobile-fold'));
+        moreBtn.remove();
+      });
+      group.appendChild(moreBtn);
+    }
+    wrap.appendChild(group);
+  } else {
+    const p = document.createElement('div');
+    p.className = 'plain-bubble';
+    p.innerHTML = text.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    wrap.appendChild(p);
+  }
+  row.appendChild(av); row.appendChild(wrap);
+  c.appendChild(row);
+}
+
+function showTyping() {
+  const c = document.getElementById('chatWrap');
+  const d = document.createElement('div');
+  d.className = 'msg-row'; d.id = 'typ';
+  d.innerHTML = `<div class="av">觅</div><div class="bot-wrap"><div class="plain-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div></div>`;
+  c.appendChild(d); scroll();
+}
+function hideTyping() {
+  const e = document.getElementById('typ'); if (e) e.remove();
+}
+
+function appendFollowUpChips(key, sessionId) {
+  const chips = FOLLOW_UP_CHIPS[key];
+  if (!chips) return;
+  const c = document.getElementById('chatWrap');
+  const botWraps = c.querySelectorAll('.bot-wrap');
+  if (!botWraps.length) return;
+  const container = document.createElement('div');
+  container.className = 'follow-up-chips';
+  chips.forEach(label => {
+    const chip = document.createElement('span');
+    chip.className = 'follow-up-chip';
+    chip.textContent = label;
+    chip.addEventListener('click', () => {
+      container.remove();
+      suggest(label);
+    });
+    container.appendChild(chip);
+  });
+  botWraps[botWraps.length - 1].appendChild(container);
+  scroll();
+}
+
+/* ── MOCK API ── */
+function detectScenario(text) {
+  const t = text.toLowerCase();
+  if (t.includes('berlin') || (t.includes('ramen') && !t.includes('london') && !t.includes('paris'))) return 'berlin';
+  if (t.includes('paris') || t.includes('bistro')) return 'paris';
+  if (t.includes('london')) return 'london';
+  if (t.includes('munich') || t.includes('münchen') || t.includes('vegan')) return 'munich';
+  return null;
+}
+
+async function callAPI(text) {
+  const delay = 400 + Math.random() * 400;
+  await new Promise(r => setTimeout(r, delay));
+  const scenario = detectScenario(text);
+  if (scenario) return MOCK_RESPONSES[scenario];
+  return `这是 Demo 模式。\n\n目前支持以下场景，点击快捷词试试：\n\n• **Berlin solo ramen**\n• **Paris date bistro**\n• **London casual dinner**\n• **Munich vegan dinner**`;
+}
+
+/* ── SEND ── */
+function suggest(t) {
+  document.getElementById('inp').value = t;
+  send();
+}
+
+async function send() {
+  const btn = document.getElementById('btn');
+  if (busy || btn.disabled) return;
+  const inp = document.getElementById('inp');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = ''; inp.style.height = 'auto';
+  busy = true; btn.disabled = true;
+
+  const session = getCurrentSession();
+  if (!session) return;
+
+  if (session.messages.length === 0) {
+    session.title = text.slice(0, 22);
+    saveSessions();
+    renderSidebar();
+  }
+  session.messages.push({ role: 'user', text });
+  saveSessions();
+  appendUserBubble(text);
+  document.querySelectorAll('.follow-up-chips').forEach(el => el.remove());
+  showTyping();
+
+  let output;
+  try {
+    output = await callAPI(text);
+  } catch {
+    output = null;
+  }
+  hideTyping();
+
+  if (output) {
+    session.messages.push({ role: 'bot', text: output });
+    saveSessions();
+    appendBotBubbles(output);
+    const scenario = detectScenario(text);
+    if (scenario && parseRestaurants(output).restaurants.length > 0) {
+      appendFollowUpChips(scenario, session.id);
+    }
+  } else {
+    const errRow = document.createElement('div');
+    errRow.className = 'msg-row';
+    errRow.innerHTML = `<div class="av">觅</div><div class="bot-wrap"><div class="plain-bubble">网络好像出了点问题，请稍后再试</div></div>`;
+    document.getElementById('chatWrap').appendChild(errRow);
+  }
+
+  busy = false;
+  setTimeout(() => { btn.disabled = false; }, 2500);
+  scroll();
+}
+
+/* ── SIDEBAR TOGGLE ── */
+function initSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const hamburger = document.getElementById('hamburgerBtn');
+  const resizer = document.getElementById('sidebarResizer');
+
+  hamburger.addEventListener('click', () => {
+    if (window.innerWidth < 900) {
+      sidebar.classList.toggle('mobile-open');
+      overlay.classList.toggle('visible');
+    } else {
+      sidebar.classList.toggle('collapsed');
+      resizer.style.display = sidebar.classList.contains('collapsed') ? 'none' : '';
+    }
+  });
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.remove('visible');
+  });
+  document.getElementById('newChatBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    newSession();
+  });
+  document.getElementById('favEntry').addEventListener('click', () => {
+    showFavHint('Demo 模式下收藏功能可用，但没有独立的收藏视图');
+  });
+
+  /* sidebar resizer */
+  let dragging = false, startX = 0, startW = 0;
+  resizer.addEventListener('mousedown', e => {
+    dragging = true; startX = e.clientX; startW = sidebar.offsetWidth;
+    document.body.classList.add('resizing-sidebar');
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const w = Math.min(360, Math.max(208, startW + (e.clientX - startX)));
+    sidebar.style.width = w + 'px';
+  });
+  document.addEventListener('mouseup', () => {
+    dragging = false;
+    document.body.classList.remove('resizing-sidebar');
+  });
+}
+
+/* ── INPUT ── */
+function initInput() {
+  const inp = document.getElementById('inp');
+  const btn = document.getElementById('btn');
+  inp.addEventListener('input', () => resize(inp));
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  });
+  btn.addEventListener('click', send);
+}
+
+/* ── INIT ── */
+function init() {
+  loadSessions();
+  if (sessions.length === 0) {
+    newSession();
+  } else {
+    currentSessionId = sessions[sessions.length - 1].id;
+    renderMessages();
+    renderSidebar();
+  }
+  initInput();
+  initSidebar();
+  initFavPopover();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
